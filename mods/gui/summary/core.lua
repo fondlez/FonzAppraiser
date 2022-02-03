@@ -47,6 +47,16 @@ do
   local getCurrentItems = session.getCurrentItems
   local getCurrentLootAndMoney = session.getCurrentLootAndMoney
   
+  local function findLootId(entry, id)
+    if not entry then return end
+    for i,v in ipairs(entry.loots) do
+      if v == id then
+        return true
+      end
+    end
+    return false
+  end
+  
   local function transformItem(item)
     --Item tooltip trick to attempt fix links after WDB cache folder deleted.
     if not item["item_link"] then
@@ -69,7 +79,7 @@ do
       ["item_link"] = item["item_link"],
       ["item_string"] = item["item_string"],
       ["pricing"] = item["pricing"],
-      ["is_hot"] = hots[item.code],
+      ["is_hot"] = findLootId(hots[item.code], item["loot_id"]),
       ["price"] = math.floor(item["value"]/item["count"]),
     }
     
@@ -115,7 +125,7 @@ do
       end
       info.data = data
       info.extra_data = extra_data
-      info.data_size = n < info.max_size and n or info.max_size
+      info.data_size = math.min(n, info.max_size)
     else
       info.data = nil
       info.extra_data = nil

@@ -407,6 +407,7 @@ do
     local result = {}
     for i, loot in ipairs(loots) do
       local item = {}
+      item["loot_id"] = i
       local zone_id = loot[1]
       local start_delta = loot[2]
       local code = loot[3]
@@ -456,6 +457,7 @@ do
     if not records then records = {} end
     for i, loot in ipairs(money_loots) do
       local record = {}
+      record["loot_id"] = i
       local zone_id = loot[1]
       local start_delta = loot[2]
       local money = loot[3]
