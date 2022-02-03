@@ -60,6 +60,11 @@ system (local) chat, sound, whisper, channel, group and guild.
 
 **/fa enable** - toggle whether to show chat output for each loot.
 
+### Extra
+**/value** or **/bvalue** - show the value of items in bags (ascending value)
+
+**/rvalue** or **/rbvalue** - show the value of items in bags (descending value)
+
 ### Advanced
 **/fa search &lt;filters&gt;** - search all loots for items matching 
 filters.
