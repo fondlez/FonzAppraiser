@@ -54,8 +54,8 @@ do
           util.strTrunc(item["zone"], 12, "..."),
           session.isoTime(item["loot_time"]),
           item["count"],
-          item["item_link"],
-          abacus:FormatMoneyFull(item["value"], true))
+          item["item_link"] or "???", --WDB errors can make temp nil item values
+          item["value"] and abacus:FormatMoneyFull(item["value"], true) or "-")
           
         tinsert(data, row)
         tinsert(extra_data, {
@@ -149,7 +149,7 @@ do
     local max_width = fontstring:GetWidth()
     if not gui.fitStringWidth(fontstring, row, max_width) then
       local _, _, item_name = find(row, "%[(.-)%]")
-      local n = len(item_name)
+      local n = item_name and len(item_name) or 0
       for length=n-1, 1 , -1 do
         row = gsub(row, "%[(.-)%]", function(name)
           return format("[%s]", utf8sub(name, 1, length))
@@ -212,7 +212,8 @@ do
             tinsert(records, { desc=L["When:"], value=extra_data["when"] })
             tinsert(records, { desc=L["Pricing:"], value=extra_data["pricing"] })
             tinsert(records, { desc=L["Price:"], 
-              value=abacus:FormatMoneyFull(extra_data["price"], true) })
+              value=extra_data["price"] and
+                abacus:FormatMoneyFull(extra_data["price"], true) or "-" })
             gui.setItemTooltip(this, "ANCHOR_BOTTOMRIGHT", 
               item_string, records)
           end)

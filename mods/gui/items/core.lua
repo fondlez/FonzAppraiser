@@ -281,10 +281,11 @@ do
     do
       local fontstring = entry.text2
       local max_width = fontstring:GetWidth()
-      local item_link = row["item_link"]
+      --WDB errors can make temp nil item values
+      local item_link = row["item_link"] or "???"
       if not gui.fitStringWidth(fontstring, item_link, max_width) then
         local _, _, item_name = find(item_link, "%[(.-)%]")
-        local n = len(item_name)
+        local n = item_name and len(item_name) or 0
         for length=n-1, 1 , -1 do
           item_link = gsub(item_link, "%[(.-)%]", function(name)
             return format("[%s]", utf8sub(name, 1, length))
@@ -301,7 +302,8 @@ do
     end
     
     --Final argument to custom Abacus library creates zero padding digits.
-    entry.text3:SetText(abacus:FormatMoneyFull(row["value"], true, nil, true))
+    entry.text3:SetText(abacus:FormatMoneyFull(row["value"] or 0, true, nil, 
+      true))
   end
   
   local previous_quality, previous_checksum
@@ -350,7 +352,8 @@ do
         local price = math.floor(row["value"]/row["count"])
         local extra_data = {
           { desc=L["Pricing:"], value=row["pricing"] },
-          { desc=L["Price:"], value=abacus:FormatMoneyFull(price, true) },
+          { desc=L["Price:"], value=price and
+            abacus:FormatMoneyFull(price, true) or "-" },
         }
         entry:SetScript("OnEnter", function()
           gui.setItemTooltip(this, "ANCHOR_BOTTOMRIGHT", 

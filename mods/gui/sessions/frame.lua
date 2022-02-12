@@ -176,8 +176,7 @@ do
     total_value:SetJustifyH("RIGHT")
     total_value.updateDisplay = function(self, value)
       --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) 
-        or "-"
+      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
       self:SetText(value)
     end
     total_value.update = updateTotalValue
@@ -199,8 +198,7 @@ do
     currency_value:SetJustifyH("RIGHT")
     currency_value.updateDisplay = function(self, value)
       --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) 
-        or "-"
+      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
       self:SetText(value)
     end
     currency_value.update = updateCurrencyValue
@@ -226,8 +224,7 @@ do
     items_value:SetJustifyH("RIGHT")
     items_value.updateDisplay = function(self, value)
       --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) 
-        or "-"
+      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
       self:SetText(value)
     end
     items_value.update = updateItemsValue
@@ -255,8 +252,7 @@ do
     hot_value:SetJustifyH("RIGHT")
     hot_value.updateDisplay = function(self, value)
       --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) 
-        or "-"
+      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
       self:SetText(value)
     end
     hot_value.update = updateHotValue

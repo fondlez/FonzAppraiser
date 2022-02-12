@@ -144,8 +144,9 @@ do
   local function formatItem(record)
     return format("%sx %s %s",
       record.count, 
-      record.item_link,
-      abacus:FormatMoneyFull(record.value or 0, true, nil, true))
+      record.item_link or "???", --WDB errors can produce temp nil item values
+      record.value 
+        and abacus:FormatMoneyFull(record.value, true, nil, true) or "-")
   end
   
   local function render(self, record)
@@ -154,7 +155,7 @@ do
     
     if not gui.fitStringWidth(self, text, max_width) then
       local _, _, item_name = find(text, "%[(.-)%]")
-      local n = len(item_name)
+      local n = item_name and len(item_name) or 0
       for length=n-1, 1 , -1 do
         text = gsub(text, "%[(.-)%]", function(name)
           return format("[%s]", utf8sub(name, 1, length))

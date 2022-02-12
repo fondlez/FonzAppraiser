@@ -119,8 +119,7 @@ do
   currency_value:SetPoint("TOPLEFT", currency_label, "TOPRIGHT", 0, 0)
   currency_value:SetJustifyH("RIGHT")
   currency_value.updateDisplay = function(self, value)
-    value = value and abacus:FormatMoneyFull(value, true) 
-      or "-"
+    value = value and abacus:FormatMoneyFull(value, true) or "-"
     self:SetText(value)
   end
   currency_value.update = updateCurrencyValue
@@ -134,8 +133,7 @@ do
   items_value:SetJustifyH("RIGHT")
   items_value.updateDisplay = function(self, value)
     --Final argument to custom Abacus library creates zero padding digits.
-    value = value and abacus:FormatMoneyFull(value, true, nil, true) 
-      or "-"
+    value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
     self:SetText(value)
   end
   items_value.update = updateItemsValue

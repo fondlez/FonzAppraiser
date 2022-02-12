@@ -69,8 +69,8 @@ do
     local row = format("%s %sx %s %s",
       isoTime(item["loot_time"]),
       item["count"],
-      item["item_link"],
-      abacus:FormatMoneyFull(item["value"], true))
+      item["item_link"] or "???",
+      item["value"] and abacus:FormatMoneyFull(item["value"], true) or "-")
       
     local hots = getCurrentItems("hots")
     local extra_data_record = {
@@ -90,7 +90,7 @@ do
     local row = format(L["%s Money - %s: %s"],
       isoTime(record["loot_time"]),
       record["type"],
-      abacus:FormatMoneyFull(record["money"], true))
+      record["money"] and abacus:FormatMoneyFull(record["money"], true) or "-")
     
     local extra_data_record = {
       ["from"] = record["zone"],
@@ -243,7 +243,7 @@ do
     local max_width = fontstring:GetWidth()
     if not gui.fitStringWidth(fontstring, row, max_width) then
       local _, _, item_name = find(row, "%[(.-)%]")
-      local n = len(item_name)
+      local n = item_name and len(item_name) or 0
       for length=n-1, 1 , -1 do
         row = gsub(row, "%[(.-)%]", function(name)
           return format("[%s]", utf8sub(name, 1, length))
@@ -281,7 +281,8 @@ do
         --Clearly an item so add item fields
         tinsert(records, { desc=L["Pricing:"], value=extra_data["pricing"] })
         tinsert(records, { desc=L["Price:"], 
-          value=abacus:FormatMoneyFull(extra_data["price"], true) })
+          value=extra_data["price"] 
+            and abacus:FormatMoneyFull(extra_data["price"], true) or "-" })
         if extra_data["is_hot"] then
           tinsert(records, { desc=L["Notice:"], value=L["Hot"] })
         end
