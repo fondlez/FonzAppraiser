@@ -1,4 +1,4 @@
-# ![Addon Icon](doc/img/icon.png) FonzAppraiser - World of Warcraft 1.12 Addon
+# ![Addon Icon](doc/img/icon.png) FonzAppraiser - World of Warcraft Addon
 
 FonzAppraiser is an addon for World of Warcraft (1.12 and 2.4.3 clients) to 
 track the value of personal loot.
