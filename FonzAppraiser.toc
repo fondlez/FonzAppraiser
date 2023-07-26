@@ -1,6 +1,7 @@
 ## Interface: 11200
 ## Title: FonzAppraiser
 ## Notes: Tracks the value of personal loot.
+## Notes-ruRU: Отслеживает стоимость личной добычи.
 ## Author: fondlez
 ## Version: 1.0.0
 ## OptionalDeps: aux-addon, Auctioneer
