@@ -1,6 +1,6 @@
 --[[
 Name: Abacus-2.0
-Revision: $Rev: 14735 $
+Revision: $Rev: 18343 $
 Author(s): ckknight (ckknight@gmail.com)
 Website: http://ckknight.wowinterface.com/
 Documentation: http://wiki.wowace.com/index.php/Abacus-2.0
@@ -9,25 +9,17 @@ Description: A library to provide tools for formatting money and time.
 Dependencies: AceLibrary
 ]]
 
---FIX(@fondlez): modified version of 14735. Revision changed to supercede other.
 local MAJOR_VERSION = "Abacus-2.0"
-local MINOR_VERSION = "$Revision: 2147483647 $"
+local MINOR_VERSION = "$Revision: 18343 $"
 
 if not AceLibrary then error(MAJOR_VERSION .. " requires AceLibrary") end
 if not AceLibrary:IsNewVersion(MAJOR_VERSION, MINOR_VERSION) then return end
 
 local Abacus = {}
 
-local table_setn
-do
-	local version = GetBuildInfo()
-	if string.find(version, "^2%.") then
-		-- 2.0.0
-		table_setn = function() end
-	else
-		table_setn = table.setn
-	end
-end
+local lua51 = loadstring("return function(...) return ... end") and true or false
+
+local table_setn = lua51 and function() end or table.setn
 
 local COPPER_ABBR = string.lower(string.sub(COPPER, 1, 1))
 local SILVER_ABBR = string.lower(string.sub(SILVER, 1, 1))
@@ -46,19 +38,14 @@ local COLOR_COPPER = "eda55f"
 local COLOR_SILVER = "c7c7cf"
 local COLOR_GOLD = "ffd700"
 
-local L_DAY_ONELETTER_ABBR    = string.sub(DAY_ONELETTER_ABBR, 4)
-local L_HOUR_ONELETTER_ABBR   = string.sub(HOUR_ONELETTER_ABBR, 4) 
-local L_MINUTE_ONELETTER_ABBR = string.sub(MINUTE_ONELETTER_ABBR, 4)
-local L_SECOND_ONELETTER_ABBR = string.sub(SECOND_ONELETTER_ABBR, 4)
+local L_DAY_ONELETTER_ABBR    = string.gsub(DAY_ONELETTER_ABBR, "%s*%%d%s*", "")
+local L_HOUR_ONELETTER_ABBR   = string.gsub(HOUR_ONELETTER_ABBR, "%s*%%d%s*", "")
+local L_MINUTE_ONELETTER_ABBR = string.gsub(MINUTE_ONELETTER_ABBR, "%s*%%d%s*", "")
+local L_SECOND_ONELETTER_ABBR = string.gsub(SECOND_ONELETTER_ABBR, "%s*%%d%s*", "")
 
 local L_UNDETERMINED = "Undetermined"
 
 if ( GetLocale() =="koKR" ) then
-	L_DAY_ONELETTER_ABBR    = string.sub(DAY_ONELETTER_ABBR, 3)
-	L_HOUR_ONELETTER_ABBR   = string.sub(HOUR_ONELETTER_ABBR, 3) 
-	L_MINUTE_ONELETTER_ABBR = string.sub(MINUTE_ONELETTER_ABBR, 3)
-	L_SECOND_ONELETTER_ABBR = string.sub(SECOND_ONELETTER_ABBR, 3)
-
 	L_UNDETERMINED = "측정불가"
 end
 
@@ -108,8 +95,8 @@ function Abacus:FormatMoneyExtended(value, colorize, textColor)
 		end
 	end
 end
---FIX(@fondlez): modified number formats with zero padding if extra argument given
-function Abacus:FormatMoneyFull(value, colorize, textColor, zero_padding)
+
+function Abacus:FormatMoneyFull(value, colorize, textColor)
 	self:argCheck(value, 2, "number")
 	local gold = abs(value / 10000)
 	local silver = abs(mod(value / 100, 100))
@@ -127,59 +114,31 @@ function Abacus:FormatMoneyFull(value, colorize, textColor, zero_padding)
 			color = COLOR_RED
 		end
 	end
-  if not zero_padding then
-    if colorize then
-      if value == inf or value == -inf then
-        return format("|cff%s%s|r", color, value)
-      elseif value ~= value then
-        return format("|cff%s0|r|cff%s%s|r", COLOR_WHITE, COLOR_COPPER, COPPER_ABBR)
-      elseif value >= 10000 or value <= -10000 then
-        return format("|cff%s%s%d|r|cff%s%s|r |cff%s%d|r|cff%s%s|r |cff%s%d|r|cff%s%s|r", color, negl, gold, COLOR_GOLD, GOLD_ABBR, color, silver, COLOR_SILVER, SILVER_ABBR, color, copper, COLOR_COPPER, COPPER_ABBR)
-      elseif value >= 100 or value <= -100 then
-        return format("|cff%s%s%d|r|cff%s%s|r |cff%s%d|r|cff%s%s|r", color, negl, silver, COLOR_SILVER, SILVER_ABBR, color, copper, COLOR_COPPER, COPPER_ABBR)
-      else
-        return format("|cff%s%s%d|r|cff%s%s|r", color, negl, copper, COLOR_COPPER, COPPER_ABBR)
-      end
-    else
-      if value == inf or value == -inf then
-        return format("%s", value)
-      elseif value ~= value then
-        return format("0%s", COPPER_ABBR)
-      elseif value >= 10000 or value <= -10000 then
-        return format("%s%d%s %d%s %d%s", negl, gold, GOLD_ABBR, silver, SILVER_ABBR, copper, COPPER_ABBR)
-      elseif value >= 100 or value <= -100 then
-        return format("%s%d%s %d%s", negl, silver, SILVER_ABBR, copper, COPPER_ABBR)
-      else
-        return format("%s%d%s", negl, copper, COPPER_ABBR)
-      end
-    end
-  else
-    if colorize then
-      if value == inf or value == -inf then
-        return format("|cff%s%s|r", color, value)
-      elseif value ~= value then
-        return format("|cff%s0|r|cff%s%s|r", COLOR_WHITE, COLOR_COPPER, COPPER_ABBR)
-      elseif value >= 10000 or value <= -10000 then
-        return format("|cff%s%s%d|r|cff%s%s|r |cff%s%02d|r|cff%s%s|r |cff%s%02d|r|cff%s%s|r", color, negl, gold, COLOR_GOLD, GOLD_ABBR, color, silver, COLOR_SILVER, SILVER_ABBR, color, copper, COLOR_COPPER, COPPER_ABBR)
-      elseif value >= 100 or value <= -100 then
-        return format("|cff%s%s%d|r|cff%s%s|r |cff%s%02d|r|cff%s%s|r", color, negl, silver, COLOR_SILVER, SILVER_ABBR, color, copper, COLOR_COPPER, COPPER_ABBR)
-      else
-        return format("|cff%s%s%d|r|cff%s%s|r", color, negl, copper, COLOR_COPPER, COPPER_ABBR)
-      end
-    else
-      if value == inf or value == -inf then
-        return format("%s", value)
-      elseif value ~= value then
-        return format("0%s", COPPER_ABBR)
-      elseif value >= 10000 or value <= -10000 then
-        return format("%s%d%s %02d%s %02d%s", negl, gold, GOLD_ABBR, silver, SILVER_ABBR, copper, COPPER_ABBR)
-      elseif value >= 100 or value <= -100 then
-        return format("%s%d%s %02d%s", negl, silver, SILVER_ABBR, copper, COPPER_ABBR)
-      else
-        return format("%s%d%s", negl, copper, COPPER_ABBR)
-      end
-    end
-  end
+	if colorize then
+		if value == inf or value == -inf then
+			return format("|cff%s%s|r", color, value)
+		elseif value ~= value then
+			return format("|cff%s0|r|cff%s%s|r", COLOR_WHITE, COLOR_COPPER, COPPER_ABBR)
+		elseif value >= 10000 or value <= -10000 then
+			return format("|cff%s%s%d|r|cff%s%s|r |cff%s%d|r|cff%s%s|r |cff%s%d|r|cff%s%s|r", color, negl, gold, COLOR_GOLD, GOLD_ABBR, color, silver, COLOR_SILVER, SILVER_ABBR, color, copper, COLOR_COPPER, COPPER_ABBR)
+		elseif value >= 100 or value <= -100 then
+			return format("|cff%s%s%d|r|cff%s%s|r |cff%s%d|r|cff%s%s|r", color, negl, silver, COLOR_SILVER, SILVER_ABBR, color, copper, COLOR_COPPER, COPPER_ABBR)
+		else
+			return format("|cff%s%s%d|r|cff%s%s|r", color, negl, copper, COLOR_COPPER, COPPER_ABBR)
+		end
+	else
+		if value == inf or value == -inf then
+			return format("%s", value)
+		elseif value ~= value then
+			return format("0%s", COPPER_ABBR)
+		elseif value >= 10000 or value <= -10000 then
+			return format("%s%d%s %d%s %d%s", negl, gold, GOLD_ABBR, silver, SILVER_ABBR, copper, COPPER_ABBR)
+		elseif value >= 100 or value <= -100 then
+			return format("%s%d%s %d%s", negl, silver, SILVER_ABBR, copper, COPPER_ABBR)
+		else
+			return format("%s%d%s", negl, copper, COPPER_ABBR)
+		end
+	end
 end
 
 function Abacus:FormatMoneyShort(copper, colorize, textColor)
@@ -360,10 +319,10 @@ function Abacus:FormatDurationExtended(duration, colorize, hideSeconds)
 	end
 end
 
-local DAY_ONELETTER_ABBR = string.gsub(DAY_ONELETTER_ABBR, "%s*%%d%s*", "")
-local HOUR_ONELETTER_ABBR = string.gsub(HOUR_ONELETTER_ABBR, "%s*%%d%s*", "")
-local MINUTE_ONELETTER_ABBR = string.gsub(MINUTE_ONELETTER_ABBR, "%s*%%d%s*", "")
-local SECOND_ONELETTER_ABBR = string.gsub(SECOND_ONELETTER_ABBR, "%s*%%d%s*", "")
+--local DAY_ONELETTER_ABBR = string.gsub(DAY_ONELETTER_ABBR, "%s*%%d%s*", "")
+--local HOUR_ONELETTER_ABBR = string.gsub(HOUR_ONELETTER_ABBR, "%s*%%d%s*", "")
+--local MINUTE_ONELETTER_ABBR = string.gsub(MINUTE_ONELETTER_ABBR, "%s*%%d%s*", "")
+--local SECOND_ONELETTER_ABBR = string.gsub(SECOND_ONELETTER_ABBR, "%s*%%d%s*", "")
 
 function Abacus:FormatDurationFull(duration, colorize, hideSeconds)
 	self:argCheck(duration, 2, "number")
