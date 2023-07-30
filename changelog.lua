@@ -1,6 +1,10 @@
 local A = FonzAppraiser
 
-A.HELP_VERSION = [[Version 2.0.0 - 2023-07-30 |cffffffff
+A.HELP_VERSION = [[Version 2.1.0 - 2023-07-30 |cffffffff
+[+] Most Valuable Item added to minimap tooltip.
+[*] Fixed a TBC bug with the target progress bar not updating correctly after Target was changed.
+
+|rVersion 2.0.0 - 2023-07-30 |cffffffff
 [+] Ported to the TBC 2.4.3 client.
 [+] Double and single quote support for Search tab filter values, e.g. slot="off hand".
 [+] New notice sound options added.
