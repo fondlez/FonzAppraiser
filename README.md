@@ -12,8 +12,8 @@ track the value of personal loot.
 * Loot from corpses and ground loot from gathering nodes is tracked.
 * A quick access, global item quality filter is always available.
 * Loot is valued by a pricing system, with the vendor/merchant as default.
-* Pricing systems currently supported: vendor, "aux-addon", and 
-"Auctioneer" addons.
+* Pricing systems currently supported: vendor, "aux-addon", "Auctioneer" and 
+"Auctionator" addons.
 * Quickly switch between pricing systems at any time.
 * A Target or goal for the current session value can be easily created.
 * When thresholds for item value, money received or Target are met Notices can
