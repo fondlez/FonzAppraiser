@@ -5,7 +5,12 @@ A.module 'util.bag'
 local util = A.require 'util.item'
 
 function mprint(...)
-  DEFAULT_CHAT_FRAME:AddMessage(table.concat(arg, " "))
+  local arg = {...}
+  local t = {}
+  for i, v in ipairs(arg) do
+    t[i] = tostring(v)
+  end
+  DEFAULT_CHAT_FRAME:AddMessage(table.concat(t, " "))
 end
 
 function isempty(s)

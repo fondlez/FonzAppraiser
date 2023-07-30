@@ -161,12 +161,16 @@ do
   local L_HOUR_ONELETTER_ABBR   = sub(HOUR_ONELETTER_ABBR, 4) 
   local L_MINUTE_ONELETTER_ABBR = sub(MINUTE_ONELETTER_ABBR, 4)
   local L_SECOND_ONELETTER_ABBR = sub(SECOND_ONELETTER_ABBR, 4)
+  
+  local L_UNDETERMINED = "Undetermined"
 
   if GetLocale() =="koKR" then
     L_DAY_ONELETTER_ABBR    = sub(DAY_ONELETTER_ABBR, 3)
     L_HOUR_ONELETTER_ABBR   = sub(HOUR_ONELETTER_ABBR, 3) 
     L_MINUTE_ONELETTER_ABBR = sub(MINUTE_ONELETTER_ABBR, 3)
     L_SECOND_ONELETTER_ABBR = sub(SECOND_ONELETTER_ABBR, 3)
+    
+    L_UNDETERMINED = "측정불가"
   end
   --]]
   
@@ -199,6 +203,91 @@ do
       return duration
     else
       return t
+    end
+  end
+
+  --Source: library "Abacus-2.0"
+  function M.formatDurationFull(duration, colorize, hideSeconds)
+    local negative = ""
+    if duration ~= duration then
+      duration = 0
+    end
+    if duration < 0 then
+      negative = "-"
+      duration = -duration
+    end
+    if not colorize then
+      if not hideSeconds then
+        if not duration or duration > 86400*365 then
+          return L_UNDETERMINED
+        elseif duration >= 86400 then
+          return format("%s%d%s %02d%s %02d%s %02d%s", negative, duration/86400, 
+          L_DAY_ONELETTER_ABBR, mod(duration/3600, 24), L_HOUR_ONELETTER_ABBR, 
+          mod(duration/60, 60), L_MINUTE_ONELETTER_ABBR, mod(duration, 60), 
+          L_SECOND_ONELETTER_ABBR)
+        elseif duration >= 3600 then
+          return format("%s%d%s %02d%s %02d%s", negative, duration/3600, 
+          L_HOUR_ONELETTER_ABBR, mod(duration/60, 60), L_MINUTE_ONELETTER_ABBR, 
+          mod(duration, 60), L_SECOND_ONELETTER_ABBR)
+        elseif duration >= 120 then
+          return format("%s%d%s %02d%s", negative, duration/60, 
+          L_MINUTE_ONELETTER_ABBR, mod(duration, 60), L_SECOND_ONELETTER_ABBR)
+        else
+          return format("%s%d%s", negative, duration, L_SECOND_ONELETTER_ABBR)
+        end
+      else
+        if not duration or duration > 86400*365 then
+          return L_UNDETERMINED
+        elseif duration >= 86400 then
+          return format("%s%d%s %02d%s %02d%s", negative, duration/86400, 
+          L_DAY_ONELETTER_ABBR, mod(duration/3600, 24), L_HOUR_ONELETTER_ABBR, 
+          mod(duration/60, 60), L_MINUTE_ONELETTER_ABBR)
+        elseif duration >= 3600 then
+          return format("%s%d%s %02d%s", negative, duration/3600, 
+          L_HOUR_ONELETTER_ABBR, mod(duration/60, 60), L_MINUTE_ONELETTER_ABBR)
+        else
+          return format("%s%d%s", negative, duration/60, 
+          L_MINUTE_ONELETTER_ABBR)
+        end
+      end
+    else
+      if not hideSeconds then
+        if not duration or duration > 86400*365 then
+          return "|cffffffff"..L_UNDETERMINED.."|r"
+        elseif duration >= 86400 then
+          return format("|cffffffff%s%d|r%s |cffffffff%02d|r%s |cffffffff%02d|r%s |cffffffff%02d|r%s", 
+          negative, duration/86400, L_DAY_ONELETTER_ABBR, 
+          mod(duration/3600, 24), L_HOUR_ONELETTER_ABBR, mod(duration/60, 60), 
+          L_MINUTE_ONELETTER_ABBR, mod(duration, 60), L_SECOND_ONELETTER_ABBR)
+        elseif duration >= 3600 then
+          return format("|cffffffff%s%d|r%s |cffffffff%02d|r%s |cffffffff%02d|r%s", 
+          negative, duration/3600, L_HOUR_ONELETTER_ABBR, mod(duration/60, 60), 
+          L_MINUTE_ONELETTER_ABBR, mod(duration, 60), L_SECOND_ONELETTER_ABBR)
+        elseif duration >= 120 then
+          return format("|cffffffff%s%d|r%s |cffffffff%02d|r%s", negative, 
+          duration/60, L_MINUTE_ONELETTER_ABBR, mod(duration, 60), 
+          L_SECOND_ONELETTER_ABBR)
+        else
+          return format("|cffffffff%s%d|r%s", negative, duration, 
+          L_SECOND_ONELETTER_ABBR)
+        end
+      else
+        if not duration or duration > 86400*365 then
+          return "|cffffffff"..L_UNDETERMINED.."|r"
+        elseif duration >= 86400 then
+          return format("|cffffffff%s%d|r%s |cffffffff%02d|r%s |cffffffff%02d|r%s", 
+          negative, duration/86400, L_DAY_ONELETTER_ABBR, 
+          mod(duration/3600, 24), L_HOUR_ONELETTER_ABBR, mod(duration/60, 60), 
+          L_MINUTE_ONELETTER_ABBR)
+        elseif duration >= 3600 then
+          return format("|cffffffff%s%d|r%s |cffffffff%02d|r%s", negative, 
+          duration/3600, L_HOUR_ONELETTER_ABBR, mod(duration/60, 60), 
+          L_MINUTE_ONELETTER_ABBR)
+        else
+          return format("|cffffffff%s%d|r%s", negative, duration/60, 
+          L_MINUTE_ONELETTER_ABBR)
+        end
+      end
     end
   end
 end

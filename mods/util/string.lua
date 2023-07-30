@@ -33,6 +33,15 @@ do
   function M.strtrim(str)
     return (gsub(str, "^%s*(.-)%s*$", "%1"))
   end
+  
+  function M.isSpaceOrEmpty(str)
+    local s = str and strtrim(str)
+    return s == nil or s == ''
+  end
+  
+  function M.isNotSpaceOrEmpty(str)
+    return not isSpaceOrEmpty(str)
+  end
 
   -- splitByPlainSeparator
   -- http://lua-users.org/wiki/SplitJoin
@@ -171,63 +180,44 @@ end
 
 -- Modified from:
 -- http://lua-users.org/wiki/TableSerialization
-do
-  function M.tablePrint(input, indent, done)
-    local format = string.format
-    local rep = string.rep
-    local concat = table.concat
-    
-    done = done or {}
-    indent = indent or 0
-    if type(input) == "table" then
-      local sb = {}
-      for key, value in pairs(input) do
-        tinsert(sb, rep (" ", indent))
-        if type(value) == "table" and not done[value] then
-          done[value] = true
-          local k = type(key) == "number" and format("[%g]", key)
-            or format('"%s"', key)
-          tinsert(sb, k .. " = {\n")
-          tinsert(sb, tablePrint(value, indent + 2, done))
-          tinsert(sb, rep (" ", indent) .. "}\n")
-        elseif type(key) == "number" then
-          tinsert(sb, format('[%g] = "%s"\n', key, tostring(value)))
-        elseif type(key) == "string" then
-          tinsert(sb, format('"%s" = "%s"\n', key, tostring(value)))
-        else
-          tinsert(sb, format("%s = %s\n", tostring(key), tostring(value)))
-        end
+function M.tablePrint(input, indent, done)
+  local format = string.format
+  local rep = string.rep
+  local concat = table.concat
+  
+  done = done or {}
+  indent = indent or 0
+  if type(input) == "table" then
+    local sb = {}
+    for key, value in pairs(input) do
+      tinsert(sb, rep (" ", indent))
+      if type(value) == "table" and not done[value] then
+        done[value] = true
+        local k = type(key) == "number" and format("[%g]", key)
+          or format('"%s"', key)
+        tinsert(sb, k .. " = {\n")
+        tinsert(sb, tablePrint(value, indent + 2, done))
+        tinsert(sb, rep (" ", indent) .. "}\n")
+      elseif type(key) == "number" then
+        tinsert(sb, format('[%g] = "%s"\n', key, tostring(value)))
+      elseif type(key) == "string" then
+        tinsert(sb, format('"%s" = "%s"\n', key, tostring(value)))
+      else
+        tinsert(sb, format("%s = %s\n", tostring(key), tostring(value)))
       end
-      return concat(sb)
-    else
-      return tostring(input)
     end
-  end
-
-  function M.tostringall(...)
-    return tablePrint(arg)
+    return concat(sb)
+  else
+    return tostring(input)
   end
 end
-
-do
-  local mod = math.mod
-  local lshift = bit.lshift
-  local sbyte, slen = string.byte, string.len
-
-  -- Ported from:
-  -- https://github.com/philanc/plc/blob/master/plc/checksum.lua
-  function M.adler32(s)
-    local length = slen(s)
-    local prime = 65521
-    local s1, s2 = 1, 0
-    
-    for i = 1,length do
-      local b = sbyte(s, i)
-      s1 = s1 + b
-      s2 = s2 + s1
-    end
-    s1 = mod(s1, prime)
-    s2 = mod(s2, prime)
-    return lshift(s2, 16) + s1
+  
+---[[
+-- TBC(@fondlez): Efficient strvarg() from TBC onwards
+function M.strvarg(...)
+  if select("#", ...) > 0 then
+    return tostring((...)), strvarg(select(2, ...))
   end
 end
+--]]
+

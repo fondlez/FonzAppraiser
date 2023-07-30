@@ -2,17 +2,19 @@ local A = FonzAppraiser
 
 A.module 'util.table'
 
-do
-  local setmetatable, setn = setmetatable, table.setn
-  
-  function M.wipe(t)
-    setmetatable(t, nil)
-    for i in pairs(t) do
-      t[i] = nil
-    end
-    setn(t, 0)
+function M.wipe(t)
+  local mt = getmetatable(t) or {}
+  if not mt.__mode or mt.__mode ~= "kv" then
+    mt.__mode = "kv"
+    t = setmetatable(t, mt)
   end
-  
+  for k in pairs(t) do
+    t[k] = nil
+  end
+  return t
+end
+
+do  
   function M.unpack(t, start, stop)    
     start = start or 1
     stop = stop or getn(t)
@@ -28,7 +30,8 @@ do
   end
 
   function M.select(index, ...)
-    if index == "#" then return arg.n end
+    local arg = {...}
+    if index == "#" then return getn(arg) end
     return unpack(arg, index)
   end
 end
@@ -47,6 +50,53 @@ function M.insertUnique(t, value)
     tinsert(t, value)
   end
   return t
+end
+
+do
+  local sort = table.sort
+  
+  function M.keys(t)
+    if not t then return end
+    local result = {}
+    for k,v in pairs(t) do
+      result[#result + 1] = k
+    end
+    return result
+  end
+
+  function M.sortedKeys(t, cmp)
+    if not t then return end
+    local result = keys(t)
+    sort(result, cmp)
+    return result
+  end
+  
+  function M.sortedPairs(t, cmp)
+    if not t then return end
+    local result = keys(t)
+    sort(result, cmp)
+    local i = 0
+    local iterator = function()
+      i = i + 1
+      local key = result[i]        
+      return key, key and t[key]
+    end
+    return iterator
+  end
+end
+
+do
+  local tolower = string.lower
+
+  function M.keyslower(t)
+    local l = {}
+    for k, v in pairs(t) do
+      if type(k) == "string" then
+        l[tolower(k)] = v
+      end
+    end
+    return l
+  end
 end
 
 do

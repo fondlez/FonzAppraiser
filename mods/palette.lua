@@ -15,7 +15,7 @@ function M.c(r, g, b, a)
 		local r, g, b, a = unpack(mt.color)
 		if text then
 			return format("|c%02X%02X%02X%02X", a, r, g, b) 
-        .. text .. FONT_COLOR_CODE_CLOSE
+        .. tostring(text) .. FONT_COLOR_CODE_CLOSE
 		else
 			return r/255, g/255, b/255, a
 		end
@@ -23,7 +23,7 @@ function M.c(r, g, b, a)
   
   function mt:__concat(text)
 		local r, g, b, a = unpack(mt.color)
-		return format("|c%02X%02X%02X%02X", a, r, g, b) .. text
+		return format("|c%02X%02X%02X%02X", a, r, g, b) .. tostring(text)
   end
   
   return setmetatable({}, mt)
@@ -49,6 +49,8 @@ M.color = {
 	red = c(255, 0, 0),
 	green = c(0, 255, 0),
 	blue = c(0, 0, 255),
+  blue1 = c(102, 178, 255),
+  blue2 = c(153, 204, 255),
   
   black_trans10 = c(0, 0, 0, 0.1),
   black_trans50 = c(0, 0, 0, 0.5),

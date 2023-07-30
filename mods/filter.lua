@@ -1,23 +1,21 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.filter'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local babble_zone = AceLibrary("Babble-Zone-2.2")
 
 local util = A.requires(
   'util.string',
   'util.time',
   'util.money',
   'util.item',
-  'util.chat'
+  'util.chat',
+  'util.client'
 )
 
 local session = A.require 'fa.session'
 local misc = A.require 'fa.misc'
-local gui_main = A.require 'fa.gui.main'
 
+local CREATURE_LEVEL_MAX = util.is_tbc and 73 or 63
 --[[
   ITEM_QUALITY0_DESC = "Poor";
   ITEM_QUALITY1_DESC = "Common";
@@ -45,12 +43,42 @@ local ITEM_RARITY = {
   [6] = ITEM_QUALITY6_DESC,
 }
 M.ITEM_RARITY = ITEM_RARITY
-local CREATURE_LEVEL_MAX = 63
+--Inventory item types (slots). Source: WoW GlobalStrings
+local ITEM_INVTYPE = {
+  [_G["INVTYPE_2HWEAPON"]] = true,
+  [_G["INVTYPE_BAG"]] = true,
+  [_G["INVTYPE_BODY"]] = true,
+  [_G["INVTYPE_CHEST"]] = true,
+  [_G["INVTYPE_CLOAK"]] = true,
+  [_G["INVTYPE_FEET"]] = true,
+  [_G["INVTYPE_FINGER"]] = true,
+  [_G["INVTYPE_HAND"]] = true,
+  [_G["INVTYPE_HEAD"]] = true,
+  [_G["INVTYPE_HOLDABLE"]] = true,
+  [_G["INVTYPE_LEGS"]] = true,
+  [_G["INVTYPE_NECK"]] = true,
+  [_G["INVTYPE_RANGED"]] = true,
+  [_G["INVTYPE_ROBE"]] = true,
+  [_G["INVTYPE_SHIELD"]] = true,
+  [_G["INVTYPE_SHOULDER"]] = true,
+  [_G["INVTYPE_TABARD"]] = true,
+  [_G["INVTYPE_TRINKET"]] = true,
+  [_G["INVTYPE_WAIST"]] = true,
+  [_G["INVTYPE_WEAPON"]] = true,
+  [_G["INVTYPE_WEAPONMAINHAND"]] = true,
+  [_G["INVTYPE_WEAPONOFFHAND"]] = true,
+  [_G["INVTYPE_WRIST"]] = true,
+}
+if util.is_tbc then
+  ITEM_INVTYPE[_G["INVTYPE_AMMO"]] = true
+  ITEM_INVTYPE[_G["INVTYPE_QUIVER"]] = true
+  ITEM_INVTYPE[_G["INVTYPE_RANGEDRIGHT"]] = true
+  ITEM_INVTYPE[_G["INVTYPE_RELIC"]] = true
+  ITEM_INVTYPE[_G["INVTYPE_THROWN"]] = true
+end
+-- Populated from Auction House API
 local ITEM_TYPE = {}
 local ITEM_SUBTYPE = {}
-local ITEM_INVTYPE = {}
-local ZONES = {}
-M.ZONES = ZONES
 
 local defaults = {
   quality = ITEM_RARITY[0],
@@ -117,8 +145,7 @@ local filter_check = {
     return util.stringToMoney(arg)
   end,
   ["zone"]=function(arg)
-    return ZONES[arg]
-      or util.uniqueKeySearch(ZONES, arg, util.strStartsWith)
+    return tostring(arg)
   end,
   ["session"]=function(arg)
     arg = tonumber(arg)
@@ -208,7 +235,7 @@ local filter_search = {
     return geq(item, filter)
   end,
   ["zone"]=function(item, filter)
-    return seq(item, filter)
+    return lfind(item, filter)
   end,
   ["session"]=function(item, filter)
     return eq(item, filter)
@@ -244,21 +271,7 @@ function M.populateItemType()
       
       ITEM_TYPE[item_type][item_subtype] = true
       ITEM_SUBTYPE[item_subtype] = true
-      
-      local slots = { GetAuctionInvTypes(i, j) }
-      local o = getn(slots)
-      
-      for k=1,o do
-        local item_invtype = slots[k]
-        ITEM_INVTYPE[_G[item_invtype]] = true
-      end
     end
-  end
-end
-
-function M.populateZones()
-  for base,localized in babble_zone:GetIterator() do
-    ZONES[base] = localized
   end
 end
 
@@ -305,7 +318,9 @@ do
   local parseItemLink = util.parseItemLink
   local startsWith, uniqueKeySearch = util.strStartsWith, util.uniqueKeySearch
   
-  local FILTER_SYNTAX = "^([^=]+)=([^=]+)$"
+  local FILTER_SYNTAX_DOUBLE_QUOTED = "^([^=]+)=\"([^=]+)\"$"
+  local FILTER_SYNTAX_SINGLE_QUOTED = "^([^=]+)=\'([^=]+)\'$"
+  local FILTER_SYNTAX_UNQUOTED = "^([^=]+)=([^=]+)$"
   
   function M.makeFilter(filter_string)
     if not filter_string or type(filter_string) ~= "string" then return end
@@ -336,7 +351,16 @@ do
     
     for i, v in ipairs(possible_filters) do
       local possible_filter = trim(v)
-      _, _, keyword, argument = find(possible_filter, FILTER_SYNTAX)
+      _, _, keyword, argument = find(possible_filter, 
+        FILTER_SYNTAX_DOUBLE_QUOTED)
+      if not keyword then
+        _, _, keyword, argument = find(possible_filter, 
+          FILTER_SYNTAX_SINGLE_QUOTED)
+      end
+      if not keyword then
+        _, _, keyword, argument = find(possible_filter, 
+          FILTER_SYNTAX_UNQUOTED)
+      end
       if not keyword then
         keyword = "name"
         argument = possible_filter
@@ -413,7 +437,7 @@ do
     set = function(msg) 
       local db = A.getCharConfig("fa.filter")
       db.quality = normalize(msg) 
-      gui_main.update()
+      A:guiUpdate()
     end,
     usage = L["Poor | Uncommon | Common | Rare | Epic | <number:0-4>"],
     validate = check,

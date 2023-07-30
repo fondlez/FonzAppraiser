@@ -155,7 +155,7 @@ addons and perhaps other types of chat messages.
 The original idea and implementation for this addon were by 
 **[fondlez](https://github.com/fondlez)**.
 
-Ever leveled to 60 on a fresh, but low population server and are now faced
+Ever leveled to max level on a fresh, but low population server and are now faced
 with the daunting task of finding the initial gold to do ... anything? This
 addon was written because I thought tracking my progress towards specific goals 
 would be a lot more fun! I hope you find the same or even find other uses for

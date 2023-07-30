@@ -1,10 +1,9 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.value.vendor'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local vendorValue = AceLibrary("LibVendorValue-1.0")
+local vendorValue = _G[string.gsub("LibVendorValue-2.0", "[^_%w]", "_")]
 
 local util = A.require 'util.item'
 
@@ -22,4 +21,4 @@ do
   end
 end
 
-pricing.addSystem(L["VENDOR"], L["Vendor"], value)
+pricing.addSystem("VENDOR", L["Vendor"], value)

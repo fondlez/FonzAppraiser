@@ -1,20 +1,19 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.gui.items'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
 
 local util = A.requires(
   'util.string',
   'util.time',
-  'util.chat'
+  'util.chat',
+  'util.money'
 )
 
 local filter = A.require 'fa.filter'
 local session = A.require 'fa.session'
 local palette = A.require 'fa.palette'
+local pricing = A.require 'fa.value.pricing'
 local gui = A.require 'fa.gui'
 local main = A.require 'fa.gui.main'
 
@@ -59,7 +58,7 @@ function updateDurationText(self)
     
     local duration = session.getSessionDurationByIndex(index)
     self:SetTextColor(palette.color.white())
-    self:SetText(format("(%s)", abacus:FormatDurationFull(duration or 0)))
+    self:SetText(format("(%s)", util.formatDurationFull(duration or 0)))
   else
     duration_animation:Hide()
     duration_animation.t0 = nil
@@ -135,6 +134,14 @@ function items_OnShow()
 end
 
 do
+  local function formatStatus(status)
+    return format('%s [%d] "%s" %s',
+      status.code, 
+      status.index,
+      status.name,
+      status.total)
+  end
+  
   function updateSessionDropdown(self)
     --Check no stale sessions data, otherwise re-initialize
     local sessions_checksum = session.getSessionsChecksum()
@@ -146,6 +153,9 @@ do
     
     if session.getSessions() and self.selected then
       UIDropDownMenu_SetSelectedValue(self, self.selected)
+      
+      local status = session.sessionStatus()
+      UIDropDownMenu_SetText(formatStatus(status[self.selected]), self)
     else
       self.selected = nil
       UIDropDownMenu_ClearAll(self)
@@ -156,15 +166,10 @@ do
     local self = session_dropdown
     self.selected = this.value
     UIDropDownMenu_SetSelectedValue(self, self.selected)
+    
+    local status = session.sessionStatus()
+    UIDropDownMenu_SetText(formatStatus(status[self.selected]), self)
     update()
-  end
-  
-  local function formatStatus(status)
-    return format('%s [%d] "%s" %s',
-      status.code, 
-      status.index,
-      status.name,
-      status.total)
   end
 
   function sessionDropdown_Initialize()
@@ -186,9 +191,11 @@ do
         info.value = status[i].index
         info.owner = self
         info.func = onClick
+        info.checked = false
         UIDropDownMenu_AddButton(info)
       end
       UIDropDownMenu_SetSelectedValue(self, self.selected)
+      UIDropDownMenu_SetText(formatStatus(status[self.selected]), self)
     end
   end
   
@@ -200,14 +207,21 @@ do
 end
 
 do
+  local menu_text = {
+    ["items"] = L["All"], 
+    ["hots"] = L["Hot"],
+  }
+  
   function updateStoreDropdown(self)
     UIDropDownMenu_SetSelectedValue(self, self.selected)
+    UIDropDownMenu_SetText(menu_text[self.selected], self)
   end
   
   local function onClick()
     local self = store_dropdown
     self.selected = this.value
     UIDropDownMenu_SetSelectedValue(self, self.selected)
+    UIDropDownMenu_SetText(menu_text[self.selected], self)
     update()
   end
 
@@ -223,9 +237,11 @@ do
       info.value = v.store
       info.owner = self
       info.func = onClick
+      info.checked = false
       UIDropDownMenu_AddButton(info)
     end
     UIDropDownMenu_SetSelectedValue(self, self.selected)
+    UIDropDownMenu_SetText(menu_text[self.selected], self)
   end
   
   function resetStoreDropdown(self)
@@ -241,7 +257,7 @@ function durationAnimation_OnUpdate()
     duration_text:SetTextColor(0.1, 1.0, 0.1)
     local duration = session.diffTime(session.currentTime(), this.t0)
     duration_text:SetText(format("(%s)",
-      abacus:FormatDurationFull(duration or 0)))
+      util.formatDurationFull(duration or 0)))
     this.seenLast = GetTime()
   end
 end
@@ -274,6 +290,7 @@ do
   local find, len, gsub = string.find, string.len, string.gsub
   local format = string.format
   local utf8sub = util.utf8sub
+  local pricingDescription = pricing.getSystemDescription
   
   local function render(entry, row)
     entry.text1:SetText(format("%dx ", row["count"]))
@@ -300,8 +317,7 @@ do
       end
     end
     
-    --Final argument to custom Abacus library creates zero padding digits.
-    entry.text3:SetText(abacus:FormatMoneyFull(row["value"], true, nil, true))
+    entry.text3:SetText(util.formatMoneyFull(row["value"], true, nil, true))
   end
   
   local previous_quality, previous_checksum
@@ -349,8 +365,8 @@ do
         local item_string = format("item:%s", row["code"])
         local price = math.floor(row["value"]/row["count"])
         local extra_data = {
-          { desc=L["Pricing:"], value=row["pricing"] },
-          { desc=L["Price:"], value=abacus:FormatMoneyFull(price, true) },
+          { desc=L["Pricing:"], value=pricingDescription(row["pricing"]) },
+          { desc=L["Price:"], value=util.formatMoneyFull(price, true) },
         }
         entry:SetScript("OnEnter", function()
           gui.setItemTooltip(this, "ANCHOR_BOTTOMRIGHT", 

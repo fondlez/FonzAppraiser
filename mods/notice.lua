@@ -1,20 +1,17 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.notice'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
-
 local pricing = A.require 'fa.value.pricing'
 local session = A.require 'fa.session'
-local gui_main = A.require 'fa.gui.main'
 
 local util = A.requires(
   'util.string',
   'util.money',
   'util.chat',
-  'util.bag'
+  'util.bag',
+  'util.client'
 )
 
 local leq = util.leq
@@ -35,28 +32,38 @@ local SOUNDS = {
   { file="Sound\\interface\\igNewTaxiNodeDiscovered.wav" },
   { file="Sound\\Item\\UseSounds\\iMagicWand1.wav" },
   { file="Sound\\interface\\levelup2.wav" },
+  { file=A.addon_path .. [[\sound\Achievement.mp3]] },
+  { file=A.addon_path .. [[\sound\BladesRingImpact.mp3]] },
+  { file=A.addon_path .. [[\sound\DeathKnight_Bloodtap.mp3]] },
+  { file=A.addon_path .. [[\sound\DeathKnight_Deathgate.mp3]] },
+  { file=A.addon_path .. [[\sound\DeathKnight_Icebound_Fortitude.mp3]] },
+  { file=A.addon_path .. [[\sound\DeathKnight_IcyTouch.mp3]] },
+  { file=A.addon_path .. [[\sound\DeathKnight_Obliterate1.mp3]] },
+  { file=A.addon_path .. [[\sound\DeathKnight_Unholypresence.mp3]] },
+  { file=A.addon_path .. [[\sound\Hunter_Master_Call.mp3]] },
+  { file=A.addon_path .. [[\sound\Polymorph_Rabbit.mp3]] },
+  { file=A.addon_path .. [[\sound\Polymorph_Turkey.mp3]] },
+  { file=A.addon_path .. [[\sound\Monk_TouchOfDeath.mp3]] },
 }
 M.SOUNDS = SOUNDS
 
-do
-  local function parseStem(path)
-    local _, _, parent_path, filename, extension = strfind(path,
-      "(.-)([^\\/]-%.?([^%.\\/]*))$")
-    if filename then
-      extension = strlower(extension)
-      if extension == "mp3" or extension == "wav" then
-        return strsub(filename, 1, strlen(filename) - 4)
-      else
-        return filename
-      end
+function M.parseStem(path)
+  local _, _, parent_path, filename, extension = strfind(path,
+    "(.-)([^\\/]-%.?([^%.\\/]*))$")
+  if filename then
+    extension = strlower(extension)
+    if extension == "mp3" or extension == "wav" then
+      return strsub(filename, 1, strlen(filename) - 4)
+    else
+      return filename
     end
   end
-  
-  -- Make a name for each sound based on filename without extension
-  for i,v in ipairs(SOUNDS) do
-    local name = parseStem(v.file)
-    v.name = name or v.file
-  end
+end
+
+-- Make a name for each sound based on filename without extension
+for i,v in ipairs(SOUNDS) do
+  local name = parseStem(v.file)
+  v.name = name or v.file
 end
 
 local defaults = {
@@ -83,7 +90,7 @@ local defaults = {
   },
   target_notify = {
     ["system"] = L["Target of {threshold} achieved: {value}!"],
-    ["sound"] = "Sound\\interface\\levelup2.wav",
+    ["sound"] = A.addon_path .. [[\sound\Achievement.mp3]],
     ["whisper"] = NONE,
     ["channel"] = NONE,
     ["group"] = NONE,
@@ -91,6 +98,14 @@ local defaults = {
   },
   ignore_soulbound = true,
 }
+if util.is_tbc then
+  -- Expansion inflation make different thresholds more appropriate
+  defaults.money_threshold = 90000
+  defaults.item_threshold = 90000
+  -- Use a different sound than current in-game combat sounds as defaults.
+  defaults.item_notify["sound"] = A.addon_path 
+    .. A.addon_path .. [[\sound\chaching.mp3]]
+end
 M.defaults = defaults
 A.registerCharConfigDefaults("fa.notice", defaults)
 
@@ -166,10 +181,10 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          money = abacus:FormatMoneyFull(money, true)
+          threshold = util.formatMoneyFull(threshold, true),
+          money = util.formatMoneyFull(money, true)
         }
-        A:Print(str)
+        A:ePrint(str)
       end
     end,
     ["sound"]=function()
@@ -192,8 +207,8 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          money = abacus:FormatMoneyFull(money, true)
+          threshold = util.formatMoneyFull(threshold, true),
+          money = util.formatMoneyFull(money, true)
         }
         local _, _, name, msg = find(str, "(%a+)%s+(%S.+)")
         if name and msg then
@@ -211,8 +226,8 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          money = abacus:FormatMoneyFull(money, true)
+          threshold = util.formatMoneyFull(threshold, true),
+          money = util.formatMoneyFull(money, true)
         }
         local _, _, channel_number, msg = find(str, "(%d+)%s+(%S.+)")
         if channel_number and msg then
@@ -230,8 +245,8 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          money = abacus:FormatMoneyFull(money, true)
+          threshold = util.formatMoneyFull(threshold, true),
+          money = util.formatMoneyFull(money, true)
         }
         chatMessage(str, "GROUP")
       end
@@ -246,8 +261,8 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          money = abacus:FormatMoneyFull(money, true)
+          threshold = util.formatMoneyFull(threshold, true),
+          money = util.formatMoneyFull(money, true)
         }
         chatMessage(str, "GUILD")
       end
@@ -267,12 +282,12 @@ do
           setting,
           zone = session.getCurrentZone(),
           item = session.safeItemLink(code),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          value = abacus:FormatMoneyFull(total, true),
+          threshold = util.formatMoneyFull(threshold, true),
+          value = util.formatMoneyFull(total, true),
           pricing = pricing,
           count = count
         }
-        A:Print(str)
+        A:ePrint(str)
       end
     end,
     ["sound"]=function()
@@ -297,8 +312,8 @@ do
           setting,
           zone = session.getCurrentZone(),
           item = session.safeItemLink(code),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          value = abacus:FormatMoneyFull(total, true),
+          threshold = util.formatMoneyFull(threshold, true),
+          value = util.formatMoneyFull(total, true),
           pricing = pricing,
           count = count
         }
@@ -320,8 +335,8 @@ do
           setting,
           zone = session.getCurrentZone(),
           item = session.safeItemLink(code),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          value = abacus:FormatMoneyFull(total, true),
+          threshold = util.formatMoneyFull(threshold, true),
+          value = util.formatMoneyFull(total, true),
           pricing = pricing,
           count = count
         }
@@ -343,8 +358,8 @@ do
           setting,
           zone = session.getCurrentZone(),
           item = session.safeItemLink(code),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          value = abacus:FormatMoneyFull(total, true),
+          threshold = util.formatMoneyFull(threshold, true),
+          value = util.formatMoneyFull(total, true),
           pricing = pricing,
           count = count
         }
@@ -363,8 +378,8 @@ do
           setting,
           zone = session.getCurrentZone(),
           item = session.safeItemLink(code),
-          threshold = abacus:FormatMoneyFull(threshold, true),
-          value = abacus:FormatMoneyFull(total, true),
+          threshold = util.formatMoneyFull(threshold, true),
+          value = util.formatMoneyFull(total, true),
           pricing = pricing,
           count = count
         }
@@ -384,10 +399,10 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(target, true),
-          value = abacus:FormatMoneyFull(value, true)
+          threshold = util.formatMoneyFull(target, true),
+          value = util.formatMoneyFull(value, true)
         }
-        A:Print(str)
+        A:ePrint(str)
       end
     end,
     ["sound"]=function()
@@ -410,8 +425,8 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(target, true),
-          value = abacus:FormatMoneyFull(value, true)
+          threshold = util.formatMoneyFull(target, true),
+          value = util.formatMoneyFull(value, true)
         }
         local _, _, name, msg = find(str, "(%a+)%s+(%S.+)")
         if name and msg then
@@ -429,8 +444,8 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(target, true),
-          value = abacus:FormatMoneyFull(value, true)
+          threshold = util.formatMoneyFull(target, true),
+          value = util.formatMoneyFull(value, true)
         }
         local _, _, channel_number, msg = find(str, "(%d+)%s+(%S.+)")
         if channel_number and msg then
@@ -448,8 +463,8 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(target, true),
-          value = abacus:FormatMoneyFull(value, true)
+          threshold = util.formatMoneyFull(target, true),
+          value = util.formatMoneyFull(value, true)
         }
         chatMessage(str, "GROUP")
       end
@@ -464,8 +479,8 @@ do
         local str = replace_vars{
           setting,
           zone = session.getCurrentZone(),
-          threshold = abacus:FormatMoneyFull(target, true),
-          value = abacus:FormatMoneyFull(value, true)
+          threshold = util.formatMoneyFull(target, true),
+          value = util.formatMoneyFull(value, true)
         }
         chatMessage(str, "GUILD")
       end
@@ -491,7 +506,7 @@ do
     local db = A.getCharConfig("fa.notice")
     local threshold = db.money_threshold
     local notified = false
-    if lne(threshold, NONE) and money >= db.money_threshold then
+    if lne(threshold, NONE) and threshold > 0 and money >= threshold then
       for _, v in ipairs(notifier_priority) do
         local notifier = money_notifiers[v]
         if notifier then notifier(money, threshold) end
@@ -548,21 +563,24 @@ if not A.options then
 end
 
 do
-  local money_example = abacus:FormatMoneyFull(1632328)
+  local money_example = util.formatMoneyFull(1632328)
+  local isempty = util.isSpaceOrEmpty
   
   local function moneyToString(money)
     local n = tonumber(money)
-    return n and abacus:FormatMoneyFull(n, true) or money
+    return n and util.formatMoneyFull(n, true) or money
   end
   
   local function normalize(msg)
-    local n = util.stringToMoney(msg) or 0
-    return n > 0 and n or NONE
+    if isempty(msg) then return end
+    local n = util.stringToMoney(msg)
+    return (n and n > 0) and n or NONE
   end
   
   local function check(msg)
-    local n = util.stringToMoney(msg) or 0
-    return n >= 0 or msg and leq(msg, NONE)
+    if isempty(msg) then return end
+    local n = util.stringToMoney(msg)
+    return (n and n >= 0) or (msg and leq(msg, NONE))
   end
   
   function M.changeTarget(msg)
@@ -715,7 +733,7 @@ do
         type = "group",
       }
       local sub_args = {}
-      for j,suboption in suboptions do
+      for j,suboption in ipairs(suboptions) do
         local notify_type = strlower(option)
         local method = suboption.method
         sub_args[method] = {

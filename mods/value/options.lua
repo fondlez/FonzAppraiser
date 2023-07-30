@@ -1,12 +1,9 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.value.pricing'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
 local util = A.requires 'util.string'
-
-local gui_main = A.require 'fa.gui.main'
 
 if not A.options then
   A.options = {

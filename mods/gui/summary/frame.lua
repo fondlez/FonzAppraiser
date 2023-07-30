@@ -1,10 +1,9 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.gui.summary'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
+local util = A.require 'util.money'
 
 local palette = A.require 'fa.palette'
 local gui = A.require 'fa.gui'
@@ -126,12 +125,28 @@ do
     total_value:SetPoint("TOPRIGHT", duration_text, "BOTTOMRIGHT", 0, -3)
     total_value:SetJustifyH("RIGHT")
     total_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) 
+      value = value and util.formatMoneyFull(value, true, nil, true) 
         or "-"
       self:SetText(value)
     end
     total_value.update = updateTotalValue
+  end
+  
+  do
+    local gph_value = text_frame:CreateFontString(nil, "ARTWORK",
+      "GameFontHighlightSmall")
+    M.gph_value = gph_value
+    text_frame.gph_value = gph_value
+    gph_value:SetPoint("TOPRIGHT", total_value, "TOPLEFT", 0, 0)
+    gph_value:SetJustifyH("CENTER")
+    gph_value.updateDisplay = function(self, value)
+      if value then
+        self:SetText(string.format(L["(%s / hour) "], 
+          util.formatMoneyFull(value, true, nil, true)))
+      else
+        self:SetText("")
+      end
+    end
   end
   
   do
@@ -149,8 +164,7 @@ do
     currency_value:SetPoint("TOPRIGHT", total_value, "BOTTOMRIGHT", 0, -3)
     currency_value:SetJustifyH("RIGHT")
     currency_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) 
+      value = value and util.formatMoneyFull(value, true, nil, true) 
         or "-"
       self:SetText(value)
     end
@@ -182,8 +196,7 @@ do
     items_value:SetPoint("TOPRIGHT", currency_value, "BOTTOMRIGHT", 0, -3)
     items_value:SetJustifyH("RIGHT")
     items_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) 
+      value = value and util.formatMoneyFull(value, true, nil, true) 
         or "-"
       self:SetText(value)
     end
@@ -211,8 +224,7 @@ do
     hot_value:SetPoint("TOPRIGHT", items_value, "BOTTOMRIGHT", 0, -3)
     hot_value:SetJustifyH("RIGHT")
     hot_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) 
+      value = value and util.formatMoneyFull(value, true, nil, true) 
         or "-"
       self:SetText(value)
     end
@@ -225,12 +237,12 @@ do
     hot_tooltip_frame:SetScript("OnLeave", hotItemTooltip_OnLeave)
   end
   
-  do
+  do  
     local start_button = gui.button(text_frame, nil, 100, 24, "Start Session")
     M.start_button = start_button
     text_frame.start_button = start_button
     start_button:SetPoint("TOPLEFT", hot_text, 0, -14)
-    start_button:SetScript("OnClick", startButton_OnClick)
+    start_button:SetScript("OnClick", startButton_ConfirmOnClick)
     start_button.update = updateStartButton
     
     local stop_button = gui.button(text_frame, nil, 100, 24, "Stop Session")
@@ -257,8 +269,8 @@ do
     target_value:SetJustifyH("RIGHT")
     target_value.updateDisplay = function(self, value, goal)
       if goal and goal > 0 then
-        goal = abacus:FormatMoneyFull(goal, true)
-        value = value and abacus:FormatMoneyFull(value, true) or "-"
+        goal = util.formatMoneyFull(goal, true)
+        value = value and util.formatMoneyFull(value, true) or "-"
         self:SetText(string.format("%s / %s", value, goal))
       else
         self:SetText(NONE)

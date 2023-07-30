@@ -70,6 +70,7 @@ function A.require(name)
 end
 
 function A.requires(...)
+  local arg = {...}
   -- Checks that all arguments already exist as a named interface.
   -- Creating new modules is not permitted through this function.
   for _, name in ipairs(arg) do

@@ -1,10 +1,7 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.gui.summary'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
 
 local util = A.requires(
   'util.string',
@@ -17,6 +14,7 @@ local palette = A.require 'fa.palette'
 local notice = A.require 'fa.notice'
 local session = A.require 'fa.session'
 local misc = A.require 'fa.misc'
+local pricing = A.require 'fa.value.pricing'
 local gui = A.require 'fa.gui'
 local main = A.require 'fa.gui.main'
 
@@ -70,7 +68,7 @@ do
       isoTime(item["loot_time"]),
       item["count"],
       item["item_link"],
-      abacus:FormatMoneyFull(item["value"], true))
+      util.formatMoneyFull(item["value"], true))
       
     local hots = getCurrentItems("hots")
     local extra_data_record = {
@@ -90,7 +88,7 @@ do
     local row = format(L["%s Money - %s: %s"],
       isoTime(record["loot_time"]),
       record["type"],
-      abacus:FormatMoneyFull(record["money"], true))
+      util.formatMoneyFull(record["money"], true))
     
     local extra_data_record = {
       ["from"] = record["zone"],
@@ -138,6 +136,24 @@ function updateNameButton(self)
   self:SetText(session.getCurrentName() or "-")
 end
 
+do
+  local isValidPerHourValue = session.isValidPerHourValue
+  local getCurrentPerHourValue = session.getCurrentPerHourValue
+  local value, current, money_loot_time, item_loot_time
+  
+  function updateGphValue()
+    value, current, money_loot_time, item_loot_time = getCurrentPerHourValue()
+    gph_value:updateDisplay(value)
+  end
+  
+  function lazyUpdateGphValue()
+    if isValidPerHourValue(current, money_loot_time, item_loot_time) then
+      return
+    end
+    updateGphValue()
+  end
+end
+
 function updateDurationText(self)
   local duration_animation = self:GetParent().duration_animation
   if session.isCurrent() then
@@ -157,6 +173,7 @@ function updateDurationText(self)
     self:SetTextColor(1.0, 0.1, 0.1)
     self:SetText("-")
   end
+  updateGphValue()
 end
 
 function updateTotalValue(self)
@@ -237,6 +254,7 @@ do
   local find, len, gsub = string.find, string.len, string.gsub
   local format = string.format
   local utf8sub = util.utf8sub
+  local pricingDescription = pricing.getSystemDescription
   
   local function render(entry, row)
     local fontstring = entry.text
@@ -279,9 +297,10 @@ do
       local item_string = extra_data["item_string"]
       if item_string then
         --Clearly an item so add item fields
-        tinsert(records, { desc=L["Pricing:"], value=extra_data["pricing"] })
+        tinsert(records, { desc=L["Pricing:"], 
+          value=pricingDescription(extra_data["pricing"]) })
         tinsert(records, { desc=L["Price:"], 
-          value=abacus:FormatMoneyFull(extra_data["price"], true) })
+          value=util.formatMoneyFull(extra_data["price"], true) })
         if extra_data["is_hot"] then
           tinsert(records, { desc=L["Notice:"], value=L["Hot"] })
         end
@@ -448,8 +467,10 @@ function durationAnimation_OnUpdate()
     duration_text:SetTextColor(0.1, 1.0, 0.1)
     local duration = session.diffTime(session.currentTime(), this.t0)
     duration_text:SetText(
-      abacus:FormatDurationFull(duration or 0))
+      util.formatDurationFull(duration or 0))
     this.seenLast = GetTime()
+    
+    lazyUpdateGphValue()
   end
 end
 
@@ -461,7 +482,7 @@ do
     local threshold = tonumber(db.money_threshold)
     GameTooltip:AddLine(L["Notice Money"], 1, 1, 1)
     GameTooltip:AddLine(format(L["Threshold: %s"], 
-      threshold and abacus:FormatMoneyFull(threshold, true)
+      threshold and util.formatMoneyFull(threshold, true)
       or NONE))
       
     GameTooltip:Show()
@@ -481,7 +502,7 @@ do
     local threshold = tonumber(db.item_threshold)
     GameTooltip:AddLine(L["Notice Item"], 1, 1, 1)
     GameTooltip:AddLine(format(L["Threshold: %s"], 
-      threshold and abacus:FormatMoneyFull(threshold, true)
+      threshold and util.formatMoneyFull(threshold, true)
       or NONE))
       
     GameTooltip:Show()
@@ -494,16 +515,37 @@ do
 end
 
 do
+  local confirm_delete_oldest_popup_name 
+    = A.name .. "_ConfirmDeleteOldest_Gui"
+  StaticPopupDialogs[confirm_delete_oldest_popup_name] = {
+    text = L["Maximum sessions. Delete oldest session?"],
+    button1 = TEXT(YES),
+    button2 = TEXT(NO),
+    OnAccept = function()
+      startButton_OnClick()
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+  }
+  
+  function startButton_ConfirmOnClick()
+    local db = A.getCharConfig("fa.session")
+    if db.confirm_delete_oldest and session.hasMaxSessions() then
+      StaticPopup_Show(confirm_delete_oldest_popup_name)
+    else
+      startButton_OnClick()
+    end
+  end
+  
   function startButton_OnClick()
     PlaySoundFile(gui.sounds.file_open_page)
     session.startSession()
-    update()
   end
   
   function stopButton_OnClick()
     PlaySoundFile(gui.sounds.file_close_page)
     session.stopSession()
-    update()
   end
 end
 

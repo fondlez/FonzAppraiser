@@ -1,8 +1,7 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.notice'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
 
 local palette = A.require 'fa.palette'
 local gui = A.require 'fa.gui'
@@ -10,35 +9,19 @@ local config = A.require 'fa.gui.config'
 
 do
   local config_frame = config.frame
-  local name = config_frame:GetName().."Notice"
-  local notice = CreateFrame("Frame", name, config_frame)
+  local notice = CreateFrame("Frame", "$parentNotice", config_frame)
   M.notice = notice
   config_frame:addTabChild(notice)
   notice:SetPoint("TOPLEFT", config_frame, 11, -42)
   notice:SetPoint("BOTTOMRIGHT", config_frame, -12, 2)
+  notice:Hide()
   notice:SetScript("OnShow", notice_OnShow)
   notice.update = update
 end
 
 do
   local checkbox = gui.checkbox(notice)
-  checkbox:SetPoint("TOPLEFT", 3, 5)
-  M.enable_checkbox = checkbox
-  checkbox.onClick = enableCheckboxOnClick
-  checkbox.update = updateEnableCheckbox
-  
-  local fontstring = checkbox:CreateFontString()
-  fontstring:SetFontObject(GameFontNormal)
-  fontstring:SetText(L["Enable chat output"])
-  fontstring:SetPoint("TOPLEFT", checkbox, 25, 0)
-  fontstring:SetJustifyH("LEFT")
-  fontstring:SetJustifyV("CENTER")
-  fontstring:SetHeight(checkbox:GetHeight())
-end
-
-do
-  local checkbox = gui.checkbox(notice)
-  checkbox:SetPoint("TOPRIGHT", 0, 5)
+  checkbox:SetPoint("TOPRIGHT", -10, 5)
   M.soulbound_checkbox = checkbox
   checkbox.onClick = soulboundCheckBoxOnClick
   checkbox.update = updateSoulboundCheckbox

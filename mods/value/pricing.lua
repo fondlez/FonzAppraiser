@@ -1,11 +1,10 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.value.pricing'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
 local defaults = {
-  pricing = L["VENDOR"]
+  pricing = "VENDOR"
 }
 A.registerCharConfigDefaults("fa.value.pricing", defaults)
 
@@ -15,6 +14,12 @@ M.systems = systems
 function M.addSystem(id, description, func)
   tinsert(systems, { id=id, description=description, func=func })
   systems[id] = getn(systems)
+end
+
+function M.getSystemDescription(id)
+  local index = systems[id]
+  local data = systems[index]
+  return data and data.description
 end
  
 function M.value(code)

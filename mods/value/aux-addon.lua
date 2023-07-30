@@ -1,10 +1,12 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.value.aux'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local util = A.require 'util.item'
+local util = A.requires(
+  'util.item',
+  'util.client'
+)
 
 local session = A.require 'fa.session'
 local pricing = A.require 'fa.value.pricing'
@@ -39,9 +41,13 @@ do
     local item_link, 
     name, item_string, rarity,
     level, item_type, item_subtype,
-    stack, item_invtype, texture = makeItemLink(item_string)
+    stack, item_invtype, texture, ilevel = makeItemLink(item_string)
     
-    return item_invtype, rarity, level
+    if util.is_tbc then
+      return item_invtype, rarity, ilevel
+    else
+      return item_invtype, rarity, level
+    end
   end
 end
 
@@ -102,10 +108,10 @@ function disenchantValue(code)
     return
   end
   
-  local slot, rarity, level = codeToInfo(code)
+  local slot, rarity, level_or_ilevel = codeToInfo(code)
   
   local value
-  ok, value = pcall(disenchant.value, slot, rarity, level)
+  ok, value = pcall(disenchant.value, slot, rarity, level_or_ilevel)
   if not ok then
     A.info("aux.core.history - disenchant.value() call failed")
     return
@@ -114,7 +120,6 @@ function disenchantValue(code)
   return value
 end
 
-pricing.addSystem(L["TV.AUX"], L["aux-addon: tooltip value"], historyValue)
-pricing.addSystem(L["TD.AUX"], L["aux-addon: tooltip daily"], historyMarketValue)
-pricing.addSystem(L["DE.AUX"], L["aux-addon: tooltip disenchant value"], 
-  disenchantValue)
+pricing.addSystem("TV.AUX", L["aux-addon: value"], historyValue)
+pricing.addSystem("TD.AUX", L["aux-addon: daily"], historyMarketValue)
+pricing.addSystem("DE.AUX", L["aux-addon: disenchant value"], disenchantValue)
