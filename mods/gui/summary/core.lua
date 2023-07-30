@@ -7,7 +7,8 @@ local util = A.requires(
   'util.string',
   'util.time',
   'util.money',
-  'util.chat'
+  'util.chat',
+  'util.client'
 )
 
 local palette = A.require 'fa.palette'
@@ -224,12 +225,16 @@ function updateTargetValue(self)
 end
 
 function updateProgressBar(self)
-  local value, goal = notice.getTarget()
+  local value, goal = notice.getTarget()  
   value = tonumber(value)
   goal = tonumber(goal)
   if goal and goal > 0 then
     self:SetMinMaxValues(0, goal)
     self:SetValue(value or 0)
+    -- TBC(@fondlez): force call to OnValueChanged handler
+    if util.is_tbc then
+      progressBar_OnValueChanged(progress_bar, value or 0)
+    end
     if value and value >= goal and not self.notified then
       self.glow_animation:play()
       self.shine_animation:play()
@@ -603,26 +608,33 @@ do
     end
   end
   
-  function progressBar_OnValueChanged()
-    local value = this:GetValue()
-    local spark = this.spark
-    local pmin, pmax = this:GetMinMaxValues()
+  -- This is only called if progress_bar:SetValue() is called.
+  -- TBC(@fondlez): in TBC OnValueChanged is only called when the value
+  -- actually changes, whereas in vanilla it is always called when SetValue
+  -- is used.
+  -- Changed from a "this" calling widget script to a "self" argument script
+  -- so that it can be manually called even when value remains the same.
+  function progressBar_OnValueChanged(self, value)
+    self = self or this
+    value = value or self:GetValue()
+    local spark = self.spark
+    local pmin, pmax = self:GetMinMaxValues()
     if value and value > 0 and value < pmax then
-      this:SetBackdropBorderColor(this.border_color())
+      self:SetBackdropBorderColor(self.border_color())
       if pmax > pmin then
         local pos = (value - pmin) / (pmax - pmin)
-        local width = this.background.width
-        spark:SetPoint("LEFT", this, "LEFT", pos * width - 4, 0)
+        local width = self.background.width
+        spark:SetPoint("LEFT", self, "LEFT", pos * width - 4, 0)
         spark:Show()
-        this.fill_text:SetText(format("%d%%", floor(pos*100)))
+        self.fill_text:SetText(format("%d%%", pos*100))
         return
       end
     elseif value and value > 0 and value >= pmax then
-      this:SetBackdropBorderColor(palette.color.yellow())
-      this.fill_text:SetText("100%")
+      self:SetBackdropBorderColor(palette.color.yellow())
+      self.fill_text:SetText("100%")
     else
-      this:SetBackdropBorderColor(this.border_color())
-      this.fill_text:SetText("")
+      self:SetBackdropBorderColor(self.border_color())
+      self.fill_text:SetText("")
     end
     spark:Hide()
   end
