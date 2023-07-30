@@ -64,6 +64,8 @@ do
   local white_rgb = { white() }
   local yellow = palette.color.yellow
   local yellow_rgb = { yellow() }
+  local blue = palette.color.blue1
+  local blue_rgb = { blue() }
   local getCurrentPerHourValue = session.getCurrentPerHourValue
   local getCurrentTotalValue = session.getCurrentTotalValue
   local getCurrentMoney =session.getCurrentMoney
@@ -71,6 +73,8 @@ do
   local getCurrentItemsValue = session.getCurrentItemsValue
   local getCurrentHotsValue = session.getCurrentHotsValue
   local getTarget = notice.getTarget
+  local getCurrentItems = session.getCurrentItems
+  local sortItemsByValue = session.sortItemsByValue
   local formatMoneyFull = util.formatMoneyFull
   
   local function formatMoney(money)
@@ -81,9 +85,15 @@ do
     return count and format("%s", white(count)) or ""
   end
   
+  local function formatItem(record)
+    return format("%sx %s", record.count, record.item_link), 
+      formatMoneyFull(record.value or 0, true, nil, true)
+  end
+  
   icon:SetScript("OnEnter", function()
     GameTooltip:SetOwner(this, ANCHOR_BOTTOMLEFT)
     GameTooltip:SetText("FonzAppraiser")
+    GameTooltip:AddLine(" ")
     GameTooltip:AddDoubleLine(
       L["Hourly:"], 
       formatMoney(getCurrentPerHourValue()),
@@ -127,6 +137,20 @@ do
           yellow_rgb[1], yellow_rgb[2], yellow_rgb[3],
           white_rgb[1], white_rgb[2], white_rgb[3])
       end
+    end
+    
+    local items = getCurrentItems()
+    local items_data = items and sortItemsByValue(items, true)
+    local top_item = items_data and items_data[1]
+    
+    if top_item then
+      GameTooltip:AddLine(" ")
+      GameTooltip:AddLine(L["Most Valuable Item"], 
+        blue_rgb[1], blue_rgb[2], blue_rgb[3])
+      local left, right = formatItem(top_item)
+      GameTooltip:AddDoubleLine(left, right,
+        white_rgb[1], white_rgb[2], white_rgb[3],
+        white_rgb[1], white_rgb[2], white_rgb[3])
     end
     
     GameTooltip:Show()
