@@ -19,23 +19,19 @@ end
 
 function M.parseItemCode(target)
   if util.is_tbc then
-    do
-      local found, _, item_id, enchant_id, gem1, gem2, gem3, gem4, suffix_id, 
-        unique_id = strfind(target, PATTERN_PARSE_ITEM_CODE)
-      if not found or tonumber(item_id) < 1 then return end
-      return tonumber(item_id), tonumber(enchant_id) or 0, 
-        tonumber(suffix_id) or 0, tonumber(unique_id) or 0,
-        tonumber(gem1) or 0, tonumber(gem2) or 0, 
-        tonumber(gem3) or 0, tonumber(gem4) or 0
-    end
+    local found, _, item_id, enchant_id, gem1, gem2, gem3, gem4, suffix_id, 
+      unique_id = strfind(target, PATTERN_PARSE_ITEM_CODE)
+    if not found or tonumber(item_id) < 1 then return end
+    return tonumber(item_id), tonumber(enchant_id) or 0, 
+      tonumber(suffix_id) or 0, tonumber(unique_id) or 0,
+      tonumber(gem1) or 0, tonumber(gem2) or 0, 
+      tonumber(gem3) or 0, tonumber(gem4) or 0
   else
-    do
-      local found, _, item_id, enchant_id, suffix_id, unique_id = 
-        strfind(target, PATTERN_PARSE_ITEM_CODE)
-      if not found or tonumber(item_id) < 1 then return end
-      return tonumber(item_id), tonumber(enchant_id) or 0, 
-        tonumber(suffix_id) or 0, tonumber(unique_id) or 0
-    end
+    local found, _, item_id, enchant_id, suffix_id, unique_id = 
+      strfind(target, PATTERN_PARSE_ITEM_CODE)
+    if not found or tonumber(item_id) < 1 then return end
+    return tonumber(item_id), tonumber(enchant_id) or 0, 
+      tonumber(suffix_id) or 0, tonumber(unique_id) or 0
   end
 end
 
@@ -56,42 +52,38 @@ function M.makeItemLink(item, max_len)
     - itemStackCount, itemInvType, itemTexture
   --]]
   if util.is_tbc then
-    do
-       local name, item_string, rarity, ilevel,
-        level, item_type, item_subtype,
-        stack, item_invtype, texture
-        = GetItemInfo(item)
-      
-      if not item_string then return end
-      
-      local color
-      _, _, _, color = GetItemQualityColor(rarity)
-      name = not max_len and name or util.strTrunc(name, max_len, "...")
-      --Note. itemString is not an item string in tbc, but a full item link
-      --So, substitute the name part with the potentially shortened name above.
-      return string.gsub(item_string, "%[[^%]]+%]", format("[%s]", name)), 
-        name, item_string, rarity,
-        level, item_type, item_subtype,
-        stack, item_invtype, texture, ilevel
-    end
+    local name, item_string, rarity, ilevel,
+      level, item_type, item_subtype,
+      stack, item_invtype, texture
+      = GetItemInfo(item)
+    
+    if not item_string then return end
+    
+    local color
+    _, _, _, color = GetItemQualityColor(rarity)
+    name = not max_len and name or util.strTrunc(name, max_len, "...")
+    --Note. itemString is not an item string in tbc, but a full item link
+    --So, substitute the name part with the potentially shortened name above.
+    return string.gsub(item_string, "%[[^%]]+%]", format("[%s]", name)), 
+      name, item_string, rarity,
+      level, item_type, item_subtype,
+      stack, item_invtype, texture, ilevel
   else
-    do
-      local ITEMLINK_FORMAT = "%s|H%s|h[%s]|h|r"
-      local name, item_string, rarity, 
-        level, item_type, item_subtype,
-        stack, item_invtype, texture
-        = GetItemInfo(item)
-      
-      if not item_string then return end
-      
-      local color
-      _, _, _, color = GetItemQualityColor(rarity)
-      name = not max_len and name or util.strTrunc(name, max_len, "...")
-      return format(ITEMLINK_FORMAT, color, item_string, name), 
-        name, item_string, rarity,
-        level, item_type, item_subtype,
-        stack, item_invtype, texture
-    end
+    local ITEMLINK_FORMAT = "%s|H%s|h[%s]|h|r"
+    local name, item_string, rarity, 
+      level, item_type, item_subtype,
+      stack, item_invtype, texture
+      = GetItemInfo(item)
+    
+    if not item_string then return end
+    
+    local color
+    _, _, _, color = GetItemQualityColor(rarity)
+    name = not max_len and name or util.strTrunc(name, max_len, "...")
+    return format(ITEMLINK_FORMAT, color, item_string, name), 
+      name, item_string, rarity,
+      level, item_type, item_subtype,
+      stack, item_invtype, texture
   end
 end
 
@@ -105,34 +97,30 @@ function M.safeItemLink(item)
   end
   
   if util.is_tbc then
-    do
-      local item_link, 
-        name, item_string, rarity, ilevel,
-        level, item_type, item_subtype,
-        stack, item_invtype, texture
-        = makeItemLink(item)
-      
-      if item_link then
-        return item_link, 
-          name, item_string, rarity,
-          level, item_type, item_subtype,
-          stack, _G[item_invtype], texture, ilevel
-      end
-    end
-  else
-    do
-      local item_link, 
+    local item_link, 
+      name, item_string, rarity, ilevel,
+      level, item_type, item_subtype,
+      stack, item_invtype, texture
+      = makeItemLink(item)
+    
+    if item_link then
+      return item_link, 
         name, item_string, rarity,
         level, item_type, item_subtype,
-        stack, item_invtype, texture
-        = makeItemLink(item)
-      
-      if item_link then
-        return item_link, 
-          name, item_string, rarity,
-          level, item_type, item_subtype,
-          stack, _G[item_invtype], texture
-      end
+        stack, _G[item_invtype], texture, ilevel
+    end
+  else
+    local item_link, 
+      name, item_string, rarity,
+      level, item_type, item_subtype,
+      stack, item_invtype, texture
+      = makeItemLink(item)
+    
+    if item_link then
+      return item_link, 
+        name, item_string, rarity,
+        level, item_type, item_subtype,
+        stack, _G[item_invtype], texture
     end
   end
   
