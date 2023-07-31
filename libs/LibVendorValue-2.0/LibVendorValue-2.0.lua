@@ -3887,8 +3887,8 @@ end
 local data = data_vanilla
 
 if GetExpansion() == "tbc" then
-  for i,k in ipairs(data_tbc) do 
-    data[k] = data_tbc
+  for k,v in pairs(data_tbc) do 
+    data[k] = v
   end
 end
 
