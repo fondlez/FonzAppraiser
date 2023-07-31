@@ -375,7 +375,6 @@ do
     shine_animation.play = playShineAnimation
   end
   
-  progress_bar:SetScript("OnValueChanged", progressBar_OnValueChanged)
   progress_bar:SetScript("OnShow", progressBar_OnShow)
   progress_bar:EnableMouse(true)
   progress_bar:SetScript("OnMouseUp", progressBar_OnClick)

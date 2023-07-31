@@ -224,28 +224,51 @@ function updateTargetValue(self)
   self:updateDisplay(tonumber(value), tonumber(goal))
 end
 
-function updateProgressBar(self)
-  local value, goal = notice.getTarget()  
-  value = tonumber(value)
-  goal = tonumber(goal)
-  if goal and goal > 0 then
-    self:SetMinMaxValues(0, goal)
-    self:SetValue(value or 0)
-    -- TBC(@fondlez): force call to OnValueChanged handler
-    if util.is_tbc then
-      progressBar_OnValueChanged(progress_bar, value or 0)
+
+do 
+  local function updateBarVisual(self, value, target_exists)
+    local spark = self.spark
+    local pmin, pmax = self:GetMinMaxValues()
+    if target_exists and value and value > 0 and value < pmax then
+      self:SetBackdropBorderColor(self.border_color())
+      if pmax > pmin then
+        local pos = (value - pmin) / (pmax - pmin)
+        local width = self.background.width
+        spark:SetPoint("LEFT", self, "LEFT", pos * width - 4, 0)
+        spark:Show()
+        self.fill_text:SetText(format("%d%%", pos*100))
+        return
+      end
+    elseif target_exists and value and value > 0 and value >= pmax then
+      self:SetBackdropBorderColor(palette.color.yellow())
+      self.fill_text:SetText("100%")
+    else
+      self:SetBackdropBorderColor(self.border_color())
+      self.fill_text:SetText("")
     end
-    if value and value >= goal and not self.notified then
-      self.glow_animation:play()
-      self.shine_animation:play()
-      self.notified = true
-    end
-  else
-    self:SetMinMaxValues(0, 0)
-    self:SetValue(0)
+    spark:Hide()
   end
-  if not goal or not value or value < goal then
-    self.notified = false
+
+  function updateProgressBar(self)
+    local value, goal = notice.getTarget()  
+    value = tonumber(value)
+    goal = tonumber(goal)
+    if goal and goal > 0 then
+      self:SetMinMaxValues(0, goal)
+      self:SetValue(value or 0)
+      if value and value >= goal and not self.notified then
+        self.glow_animation:play()
+        self.shine_animation:play()
+        self.notified = true
+      end
+    else
+      self:SetMinMaxValues(0, 0)
+      self:SetValue(0)
+    end
+    if not goal or not value or value < goal then
+      self.notified = false
+    end
+    updateBarVisual(self, value, goal and goal > 0)
   end
 end
 
@@ -606,37 +629,6 @@ do
         money_dialog:Show()
       end
     end
-  end
-  
-  -- This is only called if progress_bar:SetValue() is called.
-  -- TBC(@fondlez): in TBC OnValueChanged is only called when the value
-  -- actually changes, whereas in vanilla it is always called when SetValue
-  -- is used.
-  -- Changed from a "this" calling widget script to a "self" argument script
-  -- so that it can be manually called even when value remains the same.
-  function progressBar_OnValueChanged(self, value)
-    self = self or this
-    value = value or self:GetValue()
-    local spark = self.spark
-    local pmin, pmax = self:GetMinMaxValues()
-    if value and value > 0 and value < pmax then
-      self:SetBackdropBorderColor(self.border_color())
-      if pmax > pmin then
-        local pos = (value - pmin) / (pmax - pmin)
-        local width = self.background.width
-        spark:SetPoint("LEFT", self, "LEFT", pos * width - 4, 0)
-        spark:Show()
-        self.fill_text:SetText(format("%d%%", pos*100))
-        return
-      end
-    elseif value and value > 0 and value >= pmax then
-      self:SetBackdropBorderColor(palette.color.yellow())
-      self.fill_text:SetText("100%")
-    else
-      self:SetBackdropBorderColor(self.border_color())
-      self.fill_text:SetText("")
-    end
-    spark:Hide()
   end
 
   do
