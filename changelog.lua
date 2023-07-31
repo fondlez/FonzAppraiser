@@ -1,6 +1,9 @@
 local A = FonzAppraiser
 
-A.HELP_VERSION = [[Version 2.1.0 - 2023-07-30 |cffffffff
+A.HELP_VERSION = [[Version 2.1.1 - 2023-07-31 |cffffffff
+[*] Fixed a bug in vendor value lookup for TBC items specifically.
+
+|rVersion 2.1.0 - 2023-07-30 |cffffffff
 [+] Most Valuable Item added to minimap tooltip.
 [*] Fixed a TBC bug with the target progress bar not updating correctly after Target was changed.
 
