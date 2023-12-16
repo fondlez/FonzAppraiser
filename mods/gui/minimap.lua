@@ -92,7 +92,7 @@ do
   
   icon:SetScript("OnEnter", function()
     GameTooltip:SetOwner(this, ANCHOR_BOTTOMLEFT)
-    GameTooltip:SetText("FonzAppraiser")
+    GameTooltip:SetText(A.name)
     GameTooltip:AddLine(" ")
     GameTooltip:AddDoubleLine(
       L["Hourly:"], 

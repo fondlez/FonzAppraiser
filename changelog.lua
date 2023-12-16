@@ -1,6 +1,9 @@
 local A = FonzAppraiser
 
-A.HELP_VERSION = [[Version 2.1.1 - 2023-07-31 |cffffffff
+A.HELP_VERSION = [[Version 2.1.2 - 2023-12-16 |cffffffff
+[*] Fixed a bug in duration text order for minutes and seconds abbreviations.
+
+|rVersion 2.1.1 - 2023-07-31 |cffffffff
 [*] Fixed a bug in vendor value lookup for TBC items specifically.
 
 |rVersion 2.1.0 - 2023-07-30 |cffffffff

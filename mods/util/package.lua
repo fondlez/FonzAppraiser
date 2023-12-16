@@ -57,7 +57,7 @@ function A.module(name)
   -- Note. 0 = global, 1 = current function, 2 = caller.
   setfenv(2, environments[name])
   -- Returns whether the module was already defined.
-  return defined
+  return defined, name
 end
 
 function A.require(name)

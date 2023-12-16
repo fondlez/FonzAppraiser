@@ -3905,6 +3905,6 @@ lib["item"] = data
 -- Tentatively load library into global namespace
 local _G = _G or getfenv(0)
 local name = string.gsub(MAJOR_VERSION, "[^_%w]", "_")
-if not _G[name] then
+if not _G[name] or _G[name].MINOR_VERSION < MINOR_VERSION then
   _G[name] = lib
 end

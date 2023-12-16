@@ -41,7 +41,6 @@ function M.parseItemLink(target)
   return item_link, name, tonumber(id), code, color
 end
 
---CHECK
 function M.makeItemLink(item, max_len)
   --[[
     GetItemInfo(item)

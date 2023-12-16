@@ -151,54 +151,96 @@ do
 end
 
 do
-  local sub, find = string.sub, string.find
+  local sub, find, format = string.sub, string.find, string.format
+  local gsub = string.gsub
+  local LOCALE = GetLocale()
   
-  --Original constants from Blizzard's GlobalStrings.lua.
-  
-  --Source: library "Abacus-2.0" constant references
-  ---[[
-  local L_DAY_ONELETTER_ABBR    = sub(DAY_ONELETTER_ABBR, 4)
-  local L_HOUR_ONELETTER_ABBR   = sub(HOUR_ONELETTER_ABBR, 4) 
-  local L_MINUTE_ONELETTER_ABBR = sub(MINUTE_ONELETTER_ABBR, 4)
-  local L_SECOND_ONELETTER_ABBR = sub(SECOND_ONELETTER_ABBR, 4)
-  
-  local L_UNDETERMINED = "Undetermined"
-
-  if GetLocale() =="koKR" then
-    L_DAY_ONELETTER_ABBR    = sub(DAY_ONELETTER_ABBR, 3)
-    L_HOUR_ONELETTER_ABBR   = sub(HOUR_ONELETTER_ABBR, 3) 
-    L_MINUTE_ONELETTER_ABBR = sub(MINUTE_ONELETTER_ABBR, 3)
-    L_SECOND_ONELETTER_ABBR = sub(SECOND_ONELETTER_ABBR, 3)
-    
-    L_UNDETERMINED = "측정불가"
-  end
-  --]]
-  
-  local PATTERN_DAY = "(%d+)%s*"..L_DAY_ONELETTER_ABBR
-  local PATTERN_HOUR = "(%d+)%s*"..L_HOUR_ONELETTER_ABBR
-  local PATTERN_MINUTE = "(%d+)%s*"..L_MINUTE_ONELETTER_ABBR
-  local PATTERN_SECOND = "(%d+)%s*"..L_SECOND_ONELETTER_ABBR
-  
-  local units = {
-    { name=DAYS, pattern=PATTERN_DAY, multiplier=24*60*60 }, 
-    { name=HOURS, pattern=PATTERN_HOUR, multiplier=60*60 },
-    { name=MINUTES, pattern=PATTERN_MINUTE, multiplier=60 },
-    { name=SECONDS, pattern=PATTERN_SECOND, multiplier=1 },
+  local time_abbr = {
+    ["enUS"] = {
+      day = "d",
+      hour = "h",
+      minute = "m",
+      second = "s",
+    },
   }
+  time_abbr["deDE"] = time_abbr["enUS"]
+  time_abbr["esES"] = time_abbr["enUS"]
+  time_abbr["esMX"] = time_abbr["esES"]
+  time_abbr["frFR"] = {
+    day = "j",
+    hour = "h",
+    minute = "m",
+    second = "s",
+  }
+  time_abbr["koKR"] = {
+    day = "일",
+    hour = "시간",
+    minute = "분",
+    second = "초",
+  }
+  time_abbr["ruRU"] = {
+    day = "д.",
+    hour = "ч.",
+    minute = "м.",
+    second = "с.",
+  }
+  time_abbr["zhCN"] = time_abbr["enUS"] --GlobalStrings.lua (zhCN) confirms!
+  time_abbr["zhTW"] = {
+    day = "天",
+    hour = "小時",
+    minute = "分",
+    second = "秒",
+  }
+  local undetermined = {
+    enUS = "Undetermined",
+    deDE = "Unbestimmt",
+    esES = "Indeterminado",
+    esMX = "Indeterminado",
+    frFR = "Indéterminé",
+    koKR = "측정불가",
+    ruRU = "Неопределено",
+    zhCN = "未定",
+    zhTW = "未定",
+  }
+
+  local function captureDigits(unit, lang)
+    lang = lang or LOCALE
+    return format("%s%s", "(%d+)%s*", time_abbr[lang][unit])
+  end
+  
+  local function getDurationUnits(lang)
+    lang = lang or LOCALE
+    return {
+      { name = "day", pattern = captureDigits("day", lang), 
+        multiplier = 24*60*60 }, 
+      { name = "hour", pattern = captureDigits("hour", lang), 
+        multiplier = 60*60 }, 
+      { name = "min", pattern = captureDigits("minute", lang), 
+        multiplier = 60 }, 
+      { name = "sec", pattern = captureDigits("second", lang), 
+        multiplier = 1 }, 
+    }
+  end
   
   --Parse known durations, e.g. 132d 42h 33m 26s
-  function M.parseDuration(str, epoch)
+  function M.parseDuration(str, epoch, lang)
+    lang = lang or LOCALE
     if epoch == nil then epoch = true end
+    
     local duration, t = 0, {}
-    for i, unit in ipairs(units) do
+    for i, unit in ipairs(getDurationUnits(lang)) do
       local i1, i2, period = find(str, unit.pattern)
+      
       if i1 then
         local n = tonumber(period)
+        
         duration = duration + n * unit.multiplier
         t[unit.name] = n
       end
     end
+    
     if duration == 0 then return end
+    
     if epoch then
       return duration
     else
@@ -206,8 +248,11 @@ do
     end
   end
 
-  --Source: library "Abacus-2.0"
-  function M.formatDurationFull(duration, colorize, hideSeconds)
+  --Modified duration formatting with locale support
+  --Original source: library "Abacus-3.0"
+  function M.formatDurationFull(duration, colorize, hideSeconds, lang)
+    lang = lang or LOCALE
+    
     local negative = ""
     if duration ~= duration then
       duration = 0
@@ -216,9 +261,17 @@ do
       negative = "-"
       duration = -duration
     end
+    
+    local abbreviation = time_abbr[lang]
+    local L_DAY_ONELETTER_ABBR = abbreviation.day
+    local L_HOUR_ONELETTER_ABBR = abbreviation.hour
+    local L_MINUTE_ONELETTER_ABBR = abbreviation.minute
+    local L_SECOND_ONELETTER_ABBR = abbreviation.second
+    local L_UNDETERMINED = undetermined[lang]
+    
     if not colorize then
       if not hideSeconds then
-        if not duration or duration > 86400*365 then
+        if not duration or duration > 86400*36500 then -- 100 years
           return L_UNDETERMINED
         elseif duration >= 86400 then
           return format("%s%d%s %02d%s %02d%s %02d%s", negative, duration/86400, 
@@ -236,7 +289,7 @@ do
           return format("%s%d%s", negative, duration, L_SECOND_ONELETTER_ABBR)
         end
       else
-        if not duration or duration > 86400*365 then
+        if not duration or duration > 86400*36500 then -- 100 years
           return L_UNDETERMINED
         elseif duration >= 86400 then
           return format("%s%d%s %02d%s %02d%s", negative, duration/86400, 
@@ -252,7 +305,7 @@ do
       end
     else
       if not hideSeconds then
-        if not duration or duration > 86400*365 then
+        if not duration or duration > 86400*36500 then -- 100 years
           return "|cffffffff"..L_UNDETERMINED.."|r"
         elseif duration >= 86400 then
           return format("|cffffffff%s%d|r%s |cffffffff%02d|r%s |cffffffff%02d|r%s |cffffffff%02d|r%s", 
@@ -272,7 +325,7 @@ do
           L_SECOND_ONELETTER_ABBR)
         end
       else
-        if not duration or duration > 86400*365 then
+        if not duration or duration > 86400*36500 then -- 100 years
           return "|cffffffff"..L_UNDETERMINED.."|r"
         elseif duration >= 86400 then
           return format("|cffffffff%s%d|r%s |cffffffff%02d|r%s |cffffffff%02d|r%s", 
