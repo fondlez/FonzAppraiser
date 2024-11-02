@@ -12,9 +12,9 @@ local util = A.require 'util.item'
 
 local pricing = A.require 'fa.value.pricing'
 
+local CalcDisenchantPrice
 local GetAuctionPrice
 local GetMeanPrice
-local CalcDisenchantPrice
 
 do
   local addon_warning_already
@@ -29,15 +29,15 @@ do
       return false
     end
     
-    GetAuctionPrice = Atr_GetAuctionPrice
-    GetMeanPrice = Atr_GetMeanPrice
-    CalcDisenchantPrice = Atr_CalcDisenchantPrice
-    
-    -- Note. GetMeanPrice is an optional feature in one version of the addon
-    if not (GetAuctionPrice and CalcDisenchantPrice) then
+    -- Atr_GetMeanPrice is an optional feature in one version of the addon
+    if not (Atr_GetAuctionPrice and Atr_CalcDisenchantPrice) then
       A.warn("No known functions of Auctionator")
       return
     end  
+    
+    CalcDisenchantPrice = Atr_CalcDisenchantPrice
+    GetAuctionPrice = Atr_GetAuctionPrice
+    GetMeanPrice = Atr_GetMeanPrice
     
     return true
   end
@@ -67,26 +67,25 @@ do
     return price
   end
   
-  local checkedGetMeanPrice = false
-  
   function auctionMedian(code)
     if not GetMeanPrice then
-      if checkedGetMeanPrice or not getRefs() then return end
-      checkedGetMeanPrice = true
+      if not getRefs() then return end
     end
     
-    local item_string = format("item:%s", code)
-    
-    local item_link, name = makeItemLink(item_string)
-    
-    local ok, price = pcall(GetMeanPrice, name)
-    if not ok then
-      A.warn("Atr_GetMeanPrice() call failed %s",
-        "(not supported by all versions of Auctionator)")
-      return
+    -- Optional feature in one version of the Auctionator addon
+    if GetMeanPrice then
+      local item_string = format("item:%s", code)
+      
+      local item_link, name = makeItemLink(item_string)
+      
+      local ok, price = pcall(GetMeanPrice, name)
+      if not ok then
+        A.warn("Atr_GetMeanPrice() call failed")
+        return
+      end
+      
+      return price
     end
-    
-    return price
   end
   
   function auction(code)
