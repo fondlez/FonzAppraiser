@@ -1,8 +1,7 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.notice'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
 
 local util = A.requires(
   'util.string',
@@ -18,7 +17,6 @@ local notice_types = { "item", "money", "target" }
 function M.update()
   if not notice:IsVisible() then return end
   
-  enable_checkbox:update()
   soulbound_checkbox:update()
   
   for i,v in ipairs({ item_frame, money_frame, target_frame }) do
@@ -27,10 +25,6 @@ function M.update()
     v.resource_dropdown:update()
     v.notify_editbox:update()
   end
-end
-
-function updateEnableCheckbox(self)
-  self:SetChecked(A:isEnabled())
 end
 
 function updateSoulboundCheckbox(self)
@@ -153,12 +147,6 @@ function notice_OnShow()
   update()
 end
 
-function enableCheckboxOnClick(self)
-  local db = A.getCharConfig("fa")
-  db.enable = not db.enable
-  self:SetChecked(db.enable)
-end
-
 function soulboundCheckBoxOnClick(self)
   local db = A.getCharConfig("fa.notice")
   db.ignore_soulbound = not db.ignore_soulbound
@@ -272,7 +260,9 @@ do
   end
   
   function updateNotifierDropdown(self)
+    if not self.selected then return end
     UIDropDownMenu_SetSelectedValue(self, self.selected)
+    UIDropDownMenu_SetText(self.selected, self)
     showResourceDropdown(self)
   end
   
@@ -280,6 +270,7 @@ do
     local function onClick()      
       self.selected = this.value
       UIDropDownMenu_SetSelectedValue(self, self.selected)
+      UIDropDownMenu_SetText(self.selected, self)
       showResourceDropdown(self)
       
       local value = notify[self.selected]
@@ -299,11 +290,13 @@ do
         info.value = v
         info.owner = self
         info.func = onClick
+        info.checked = false
         UIDropDownMenu_AddButton(info)
       end
     end
     
     UIDropDownMenu_SetSelectedValue(self, self.selected)
+    UIDropDownMenu_SetText(self.selected, self)
     showResourceDropdown(self)
   end
   
@@ -331,14 +324,16 @@ end
 
 do
   function updateResourceDropdown(self)
+    if not self.selected then return end
     UIDropDownMenu_SetSelectedValue(self, self.selected)
+    UIDropDownMenu_SetText(parseStem(self.selected), self)
   end
   
   local function initialize(self, notify)
     local function onClick()
       self.selected = this.value
       UIDropDownMenu_SetSelectedValue(self, self.selected)
-      
+      UIDropDownMenu_SetText(parseStem(self.selected), self)
       PlaySoundFile(this.value)
       notify.sound = self.selected
       
@@ -357,10 +352,12 @@ do
       info.value = v.file
       info.owner = self
       info.func = onClick
+      info.checked = false
       UIDropDownMenu_AddButton(info)
     end
     
     UIDropDownMenu_SetSelectedValue(self, self.selected)
+    UIDropDownMenu_SetText(parseStem(self.selected), self)
   end
   
   function itemResourceDropdown_Initialize()
@@ -458,10 +455,12 @@ do
     
     local resource_dropdown = parent.resource_dropdown
     if resource_dropdown:IsVisible() 
-        and resource_dropdown.selected ~= value then
-      resource_dropdown.selected = value
+        and resource_dropdown.selected ~= notify[notifier] then
+      resource_dropdown.selected = notify[notifier]
+      resource_dropdown:update()
       --Make empty dropdown text
-      _G[resource_dropdown:GetName().."Text"]:SetText("")
+      --_G[resource_dropdown:GetName().."Text"]:SetText("")
+      --UIDropDownMenu_SetText("", resource_dropdown)
     end
     
     self.border:SetBackdropBorderColor(palette.color.original())

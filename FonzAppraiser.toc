@@ -1,61 +1,15 @@
-## Interface: 11200
+## Interface: 30300
 ## Title: FonzAppraiser
-## Notes: Tracks the value of personal loot.
+## Notes: Tracks the value of personal loot. Command: /fa.
 ## Author: fondlez
-## Version: 1.0.0
-## OptionalDeps: aux-addon, Auctioneer
+## Version: 3.0.0
+## OptionalDeps: aux-addon, Auctioneer, Auctionator, TradeSkillMaster
 ## X-Website: http://github.com/fondlez
+## X-Category: Inventory
 ## SavedVariables: FonzAppraiserDB
 ## SavedVariablesPerCharacter: FonzAppraiserCDB
+## DefaultState: enabled
 
 libs\embeds.xml
 locales\locales.xml
-
-base.lua
-debug.lua
-db.lua
-changelog.lua
-
-mods\util\package.lua
-mods\util\table.lua
-mods\util\string.lua
-mods\util\time.lua
-mods\util\money.lua
-mods\util\chat.lua
-mods\util\item.lua
-mods\util\bag.lua
-mods\util\group.lua
-
-mods\palette.lua
-mods\value\pricing.lua
-mods\value\vendor.lua
-mods\value\aux-addon.lua
-mods\value\auctioneer.lua
-mods\value\options.lua
-mods\filter_groups.lua
-mods\filter.lua
-mods\notice.lua
-mods\session\base.lua
-mods\session\manage.lua
-mods\session\display.lua
-mods\session\options.lua
-mods\misc.lua
-mods\gui\gui.lua
-mods\gui\main.lua
-mods\gui\summary\core.lua
-mods\gui\summary\frame.lua
-mods\gui\items\core.lua
-mods\gui\items\frame.lua
-mods\gui\search\core.lua
-mods\gui\search\frame.lua
-mods\gui\sessions\core.lua
-mods\gui\sessions\frame.lua
-mods\gui\config.lua
-mods\gui\config\notice\core.lua
-mods\gui\config\notice\frame.lua
-mods\gui\help.lua
-mods\gui\help\description.lua
-mods\gui\help\version.lua
-mods\gui\help\credits.lua
-
-core.lua
+core.xml

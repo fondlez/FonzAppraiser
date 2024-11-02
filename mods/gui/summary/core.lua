@@ -1,22 +1,21 @@
 local A = FonzAppraiser
+local L = A.locale
 
-A.module 'fa.gui.summary'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
+A.module('fa.gui.summary', {'util.compat'})
 
 local util = A.requires(
   'util.string',
   'util.time',
   'util.money',
-  'util.chat'
+  'util.chat',
+  'util.client'
 )
 
 local palette = A.require 'fa.palette'
 local notice = A.require 'fa.notice'
 local session = A.require 'fa.session'
 local misc = A.require 'fa.misc'
+local pricing = A.require 'fa.value.pricing'
 local gui = A.require 'fa.gui'
 local main = A.require 'fa.gui.main'
 
@@ -69,8 +68,8 @@ do
     local row = format("%s %sx %s %s",
       isoTime(item["loot_time"]),
       item["count"],
-      item["item_link"] or "???",
-      item["value"] and abacus:FormatMoneyFull(item["value"], true) or "-")
+      item["item_link"],
+      util.formatMoneyFull(item["value"], true))
       
     local hots = getCurrentItems("hots")
     local extra_data_record = {
@@ -90,7 +89,7 @@ do
     local row = format(L["%s Money - %s: %s"],
       isoTime(record["loot_time"]),
       record["type"],
-      record["money"] and abacus:FormatMoneyFull(record["money"], true) or "-")
+      util.formatMoneyFull(record["money"], true))
     
     local extra_data_record = {
       ["from"] = record["zone"],
@@ -138,6 +137,24 @@ function updateNameButton(self)
   self:SetText(session.getCurrentName() or "-")
 end
 
+do
+  local isValidPerHourValue = session.isValidPerHourValue
+  local getCurrentPerHourValue = session.getCurrentPerHourValue
+  local value, current, money_loot_time, item_loot_time
+  
+  function updateGphValue()
+    value, current, money_loot_time, item_loot_time = getCurrentPerHourValue()
+    gph_value:updateDisplay(value)
+  end
+  
+  function lazyUpdateGphValue()
+    if isValidPerHourValue(current, money_loot_time, item_loot_time) then
+      return
+    end
+    updateGphValue()
+  end
+end
+
 function updateDurationText(self)
   local duration_animation = self:GetParent().duration_animation
   if session.isCurrent() then
@@ -157,6 +174,7 @@ function updateDurationText(self)
     self:SetTextColor(1.0, 0.1, 0.1)
     self:SetText("-")
   end
+  updateGphValue()
 end
 
 function updateTotalValue(self)
@@ -206,24 +224,52 @@ function updateTargetValue(self)
   self:updateDisplay(tonumber(value), tonumber(goal))
 end
 
-function updateProgressBar(self)
-  local value, goal = notice.getTarget()
-  value = tonumber(value)
-  goal = tonumber(goal)
-  if goal and goal > 0 then
-    self:SetMinMaxValues(0, goal)
-    self:SetValue(value or 0)
-    if value and value >= goal and not self.notified then
-      self.glow_animation:play()
-      self.shine_animation:play()
-      self.notified = true
+
+do 
+  local function updateBarVisual(self, value, target_exists)
+    local spark = self.spark
+    local pmin, pmax = self:GetMinMaxValues()
+    local parent = self:GetParent()
+    if target_exists and value and value > 0 and value < pmax then
+      parent:SetBackdropBorderColor(parent.border_color())
+      if pmax > pmin then
+        local pos = (value - pmin) / (pmax - pmin)
+        local width = self.statusbar.width
+        spark:SetPoint("LEFT", self, pos * width - 9, 0)
+        spark:Show()
+        self.fill_text:SetText(format("%d%%", pos*100))
+        return
+      end
+    elseif target_exists and value and value > 0 and value >= pmax then
+      parent:SetBackdropBorderColor(palette.color.yellow())
+      self.fill_text:SetText("100%")
+    else
+      parent:SetBackdropBorderColor(parent.border_color())
+      self.fill_text:SetText("")
     end
-  else
-    self:SetMinMaxValues(0, 0)
-    self:SetValue(0)
+    spark:Hide()
   end
-  if not goal or not value or value < goal then
-    self.notified = false
+
+  function updateProgressBar(self)
+    local value, goal = notice.getTarget()  
+    value = tonumber(value)
+    goal = tonumber(goal)
+    if goal and goal > 0 then
+      self:SetMinMaxValues(0, goal)
+      self:SetValue(value or 0)
+      if value and value >= goal and not self.notified then
+        self.glow_animation:play()
+        self.shine_animation:play()
+        self.notified = true
+      end
+    else
+      self:SetMinMaxValues(0, 0)
+      self:SetValue(0)
+    end
+    if not goal or not value or value < goal then
+      self.notified = false
+    end
+    updateBarVisual(self, value, goal and goal > 0)
   end
 end
 
@@ -237,13 +283,14 @@ do
   local find, len, gsub = string.find, string.len, string.gsub
   local format = string.format
   local utf8sub = util.utf8sub
+  local pricingDescription = pricing.getSystemDescription
   
   local function render(entry, row)
     local fontstring = entry.text
     local max_width = fontstring:GetWidth()
     if not gui.fitStringWidth(fontstring, row, max_width) then
       local _, _, item_name = find(row, "%[(.-)%]")
-      local n = item_name and len(item_name) or 0
+      local n = len(item_name)
       for length=n-1, 1 , -1 do
         row = gsub(row, "%[(.-)%]", function(name)
           return format("[%s]", utf8sub(name, 1, length))
@@ -279,10 +326,10 @@ do
       local item_string = extra_data["item_string"]
       if item_string then
         --Clearly an item so add item fields
-        tinsert(records, { desc=L["Pricing:"], value=extra_data["pricing"] })
+        tinsert(records, { desc=L["Pricing:"], 
+          value=pricingDescription(extra_data["pricing"]) })
         tinsert(records, { desc=L["Price:"], 
-          value=extra_data["price"] 
-            and abacus:FormatMoneyFull(extra_data["price"], true) or "-" })
+          value=util.formatMoneyFull(extra_data["price"], true) })
         if extra_data["is_hot"] then
           tinsert(records, { desc=L["Notice:"], value=L["Hot"] })
         end
@@ -363,10 +410,13 @@ do
     sliderResetCheck(scroll_frame.slider)
   end
   
-  function scrollFrame_OnVerticalScroll()
-    local parent = this:GetParent()
-    FauxScrollFrame_OnVerticalScroll(parent["sframe1"].entry_height, 
-      function() parent:scrollFrameFauxUpdate("sframe1") end)
+  function scrollFrame_OnVerticalScroll(self, value)
+    local self = self or this
+    local value = value or arg1
+    local parent = self:GetParent()
+    FauxScrollFrame_OnVerticalScroll(self, value,
+      parent["sframe1"].entry_height, 
+      function(self) parent:scrollFrameFauxUpdate("sframe1") end)
   end
 end
 
@@ -449,8 +499,10 @@ function durationAnimation_OnUpdate()
     duration_text:SetTextColor(0.1, 1.0, 0.1)
     local duration = session.diffTime(session.currentTime(), this.t0)
     duration_text:SetText(
-      abacus:FormatDurationFull(duration or 0))
+      util.formatDurationFull(duration or 0))
     this.seenLast = GetTime()
+    
+    lazyUpdateGphValue()
   end
 end
 
@@ -462,7 +514,7 @@ do
     local threshold = tonumber(db.money_threshold)
     GameTooltip:AddLine(L["Notice Money"], 1, 1, 1)
     GameTooltip:AddLine(format(L["Threshold: %s"], 
-      threshold and abacus:FormatMoneyFull(threshold, true)
+      threshold and util.formatMoneyFull(threshold, true)
       or NONE))
       
     GameTooltip:Show()
@@ -482,7 +534,7 @@ do
     local threshold = tonumber(db.item_threshold)
     GameTooltip:AddLine(L["Notice Item"], 1, 1, 1)
     GameTooltip:AddLine(format(L["Threshold: %s"], 
-      threshold and abacus:FormatMoneyFull(threshold, true)
+      threshold and util.formatMoneyFull(threshold, true)
       or NONE))
       
     GameTooltip:Show()
@@ -495,16 +547,37 @@ do
 end
 
 do
+  local confirm_delete_oldest_popup_name 
+    = A.name .. "_ConfirmDeleteOldest_Gui"
+  StaticPopupDialogs[confirm_delete_oldest_popup_name] = {
+    text = L["Maximum sessions. Delete oldest session?"],
+    button1 = TEXT(YES),
+    button2 = TEXT(NO),
+    OnAccept = function()
+      startButton_OnClick()
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+  }
+  
+  function startButton_ConfirmOnClick()
+    local db = A.getCharConfig("fa.session")
+    if db.confirm_delete_oldest and session.hasMaxSessions() then
+      StaticPopup_Show(confirm_delete_oldest_popup_name)
+    else
+      startButton_OnClick()
+    end
+  end
+  
   function startButton_OnClick()
     PlaySoundFile(gui.sounds.file_open_page)
     session.startSession()
-    update()
   end
   
   function stopButton_OnClick()
     PlaySoundFile(gui.sounds.file_close_page)
     session.stopSession()
-    update()
   end
 end
 
@@ -561,30 +634,6 @@ do
       end
     end
   end
-  
-  function progressBar_OnValueChanged()
-    local value = this:GetValue()
-    local spark = this.spark
-    local pmin, pmax = this:GetMinMaxValues()
-    if value and value > 0 and value < pmax then
-      this:SetBackdropBorderColor(this.border_color())
-      if pmax > pmin then
-        local pos = (value - pmin) / (pmax - pmin)
-        local width = this.background.width
-        spark:SetPoint("LEFT", this, "LEFT", pos * width - 4, 0)
-        spark:Show()
-        this.fill_text:SetText(format("%d%%", floor(pos*100)))
-        return
-      end
-    elseif value and value > 0 and value >= pmax then
-      this:SetBackdropBorderColor(palette.color.yellow())
-      this.fill_text:SetText("100%")
-    else
-      this:SetBackdropBorderColor(this.border_color())
-      this.fill_text:SetText("")
-    end
-    spark:Hide()
-  end
 
   do
     local RAMP_TIME, DECAY_TIME = 0.5, 2.5
@@ -611,7 +660,7 @@ do
   end
   
   do
-    local RAMP_TIME, HOLD_TIME, DECAY_TIME = 0.3, 0.5, 2.5
+    local RAMP_TIME, HOLD_TIME, DECAY_TIME = 0.3, 0.7, 2.3
     local DECAY_STEP = 1/(DECAY_TIME - HOLD_TIME)
     local DECAY_WEIGHTING = 1
     local SPOT_TIME, SWEEP_TIME = RAMP_TIME, DECAY_TIME
@@ -622,10 +671,10 @@ do
       local shine = this:GetParent().shine
 			local t = GetTime() - this.t0
 			if t <= SPOT_TIME then
-				shine:SetPoint("TOPLEFT", progress_bar, 8, -3)
+				shine:SetPoint("TOPLEFT", progress_bar, 8, 0)
 			elseif t <= SWEEP_TIME then
 				shine:SetPoint("TOPLEFT", progress_bar, 
-          8 + (t - SPOT_TIME) * SWEEP_STEP * this.distance, -3)
+          8 + (t - SPOT_TIME) * SWEEP_STEP * this.distance, 0)
 			end
 			if t <= RAMP_TIME then
 				shine:SetAlpha(0)

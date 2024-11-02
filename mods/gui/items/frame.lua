@@ -1,13 +1,11 @@
 local A = FonzAppraiser
+local L = A.locale
 
-A.module 'fa.gui.items'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
+A.module('fa.gui.items', {'util.compat'})
 
 local util = A.requires(
-  'util.time'
+  'util.time',
+  'util.money'
 )
 
 local palette = A.require 'fa.palette'
@@ -119,7 +117,8 @@ do
   currency_value:SetPoint("TOPLEFT", currency_label, "TOPRIGHT", 0, 0)
   currency_value:SetJustifyH("RIGHT")
   currency_value.updateDisplay = function(self, value)
-    value = value and abacus:FormatMoneyFull(value, true) or "-"
+    value = value and util.formatMoneyFull(value, true) 
+      or "-"
     self:SetText(value)
   end
   currency_value.update = updateCurrencyValue
@@ -132,8 +131,8 @@ do
   items_value:SetPoint("TOPRIGHT", store_dropdown, "BOTTOMRIGHT", -30, 2)
   items_value:SetJustifyH("RIGHT")
   items_value.updateDisplay = function(self, value)
-    --Final argument to custom Abacus library creates zero padding digits.
-    value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+    value = value and util.formatMoneyFull(value, true, nil, true) 
+      or "-"
     self:SetText(value)
   end
   items_value.update = updateItemsValue

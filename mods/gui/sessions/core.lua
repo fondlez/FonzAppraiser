@@ -1,14 +1,13 @@
 local A = FonzAppraiser
+local L = A.locale
 
-A.module 'fa.gui.sessions'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
+A.module('fa.gui.sessions', {'util.compat'})
 
 local util = A.requires(
   'util.table',
-  'util.string'
+  'util.string',
+  'util.money',
+  'util.time'
 )
 
 local session = A.require 'fa.session'
@@ -76,6 +75,24 @@ function updateNameButton(self)
   self:SetText(session.getSessionName(s) or "-")
 end
 
+do
+  local isValidPerHourValue = session.isValidPerHourValue
+  local getCurrentPerHourValue = session.getCurrentPerHourValue
+  local value, current, money_loot_time, item_loot_time
+  
+  function updateGphValue()
+    value, current, money_loot_time, item_loot_time = getCurrentPerHourValue()
+    gph_value:updateDisplay(value)
+  end
+  
+  function lazyUpdateGphValue()
+    if isValidPerHourValue(current, money_loot_time, item_loot_time) then
+      return
+    end
+    updateGphValue()
+  end
+end
+
 function updateDurationText(self)
   local duration_animation = self:GetParent().duration_animation
   local s = sessions.highlight_session
@@ -85,7 +102,7 @@ function updateDurationText(self)
       
       local duration = session.getSessionDuration(s)
       self:SetTextColor(palette.color.white())
-      self:SetText(abacus:FormatDurationFull(duration or 0))
+      self:SetText(util.formatDurationFull(duration or 0))
     else
       if not duration_animation.seenLast then
         -- Matching: GameFontGreenSmall
@@ -96,6 +113,7 @@ function updateDurationText(self)
       duration_animation.t0 = session.getSessionStart(s)
       duration_animation:Show()
     end
+    updateGphValue()
   else
     duration_animation:Hide()
     duration_animation.t0 = nil
@@ -142,11 +160,10 @@ do
   local utf8sub = util.utf8sub
   
   local function formatItem(record)
-    return format("%sx %s %s",
-      record.count, 
-      record.item_link or "???", --WDB errors can produce temp nil item values
-      record.value 
-        and abacus:FormatMoneyFull(record.value, true, nil, true) or "-")
+    return format("%s %s %s",
+      record.count and format("%sx", record.count) or "", 
+      record.item_link or "-",
+      util.formatMoneyFull(record.value or 0, true, nil, true) or "")
   end
   
   local function render(self, record)
@@ -155,7 +172,7 @@ do
     
     if not gui.fitStringWidth(self, text, max_width) then
       local _, _, item_name = find(text, "%[(.-)%]")
-      local n = item_name and len(item_name) or 0
+      local n = len(item_name)
       for length=n-1, 1 , -1 do
         text = gsub(text, "%[(.-)%]", function(name)
           return format("[%s]", utf8sub(name, 1, length))
@@ -306,7 +323,7 @@ do
   end
   
   do
-    local wipe = util.wipe
+    local wipe = wipe or util.wipe
     
     local previous_checksum
     
@@ -359,10 +376,13 @@ do
     resetCheck(scroll_frame.slider, info)
   end
   
-  function scrollFrame_OnVerticalScroll()
-    local parent = this:GetParent()
-    FauxScrollFrame_OnVerticalScroll(parent["sframe1"].entry_height, 
-      function() parent:scrollFrameFauxUpdate("sframe1") end)
+  function scrollFrame_OnVerticalScroll(self, value)
+    local self = self or this
+    local value = value or arg1
+    local parent = self:GetParent()
+    FauxScrollFrame_OnVerticalScroll(self, value,
+      parent["sframe1"].entry_height, 
+      function(self) parent:scrollFrameFauxUpdate("sframe1") end)
   end
 end
 
@@ -530,8 +550,10 @@ do
       duration_text:SetTextColor(0.1, 1.0, 0.1)
       local duration = session.diffTime(session.currentTime(), this.t0)
       duration_text:SetText(
-        abacus:FormatDurationFull(duration or 0))
+        util.formatDurationFull(duration or 0))
       this.seenLast = GetTime()
+      
+      lazyUpdateGphValue()
     end
   end
 end

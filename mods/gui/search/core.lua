@@ -1,10 +1,7 @@
 local A = FonzAppraiser
+local L = A.locale
 
-A.module 'fa.search'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
+A.module('fa.search', {'util.compat'})
 
 local util = A.requires(
   'util.string',
@@ -15,6 +12,7 @@ local util = A.requires(
 
 local filter = A.require 'fa.filter'
 local session = A.require 'fa.session'
+local pricing = A.require 'fa.value.pricing'
 local gui = A.require 'fa.gui'
 local main = A.require 'fa.gui.main'
 
@@ -54,8 +52,8 @@ do
           util.strTrunc(item["zone"], 12, "..."),
           session.isoTime(item["loot_time"]),
           item["count"],
-          item["item_link"] or "???", --WDB errors can make temp nil item values
-          item["value"] and abacus:FormatMoneyFull(item["value"], true) or "-")
+          item["item_link"],
+          util.formatMoneyFull(item["value"], true))
           
         tinsert(data, row)
         tinsert(extra_data, {
@@ -143,13 +141,14 @@ do
   local find, len, gsub = string.find, string.len, string.gsub
   local format = string.format
   local utf8sub = util.utf8sub
+  local pricingDescription = pricing.getSystemDescription
   
   local function render(entry, row)
     local fontstring = entry.text
     local max_width = fontstring:GetWidth()
     if not gui.fitStringWidth(fontstring, row, max_width) then
       local _, _, item_name = find(row, "%[(.-)%]")
-      local n = item_name and len(item_name) or 0
+      local n = len(item_name)
       for length=n-1, 1 , -1 do
         row = gsub(row, "%[(.-)%]", function(name)
           return format("[%s]", utf8sub(name, 1, length))
@@ -210,10 +209,10 @@ do
             local records = {}
             tinsert(records, { desc=L["Zone:"], value=extra_data["from"] })
             tinsert(records, { desc=L["When:"], value=extra_data["when"] })
-            tinsert(records, { desc=L["Pricing:"], value=extra_data["pricing"] })
+            tinsert(records, { desc=L["Pricing:"], 
+              value=pricingDescription(extra_data["pricing"]) })
             tinsert(records, { desc=L["Price:"], 
-              value=extra_data["price"] and
-                abacus:FormatMoneyFull(extra_data["price"], true) or "-" })
+              value=util.formatMoneyFull(extra_data["price"], true) })
             gui.setItemTooltip(this, "ANCHOR_BOTTOMRIGHT", 
               item_string, records)
           end)
@@ -230,9 +229,12 @@ do
     sliderResetCheck(scroll_frame.slider)
   end
 
-  function scrollFrame_OnVerticalScroll()
-    local parent = this:GetParent()
-    FauxScrollFrame_OnVerticalScroll(parent["sframe1"].entry_height, 
-      function() parent:scrollFrameFauxUpdate("sframe1") end)
+  function scrollFrame_OnVerticalScroll(self, value)
+    local self = self or this
+    local value = value or arg1
+    local parent = self:GetParent()
+    FauxScrollFrame_OnVerticalScroll(self, value,
+      parent["sframe1"].entry_height, 
+      function(self) parent:scrollFrameFauxUpdate("sframe1") end)
   end
 end

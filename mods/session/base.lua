@@ -2,10 +2,9 @@ local A = FonzAppraiser
 
 A.module 'fa.session'
 
-local abacus = AceLibrary("Abacus-2.0")
-
 local util = A.requires(
   'util.table',
+  'util.math',
   'util.string',
   'util.time',
   'util.item'
@@ -13,6 +12,8 @@ local util = A.requires(
 
 local pricing = A.require 'fa.value.pricing'
 local filter = A.require 'fa.filter'
+
+local lne = util.lne
 
 -- SETTINGS --
 
@@ -65,6 +66,7 @@ local defaults = {
   --]]
   },
   sessions_checksum = nil,
+  confirm_delete_oldest = true,
 }
 A.registerCharConfigDefaults("fa.session", defaults)
 
@@ -96,31 +98,8 @@ function currentZone()
   return GetRealZoneText()
 end
 
-function M.safeItemLink(item)
-  if not item then return end
-  --Accept codes not just ids or item strings
-  local i1, i2 = strfind(item, "^(%d+):(%d*):(%d*):(%d*)")
-  if i1 then
-    --Make item string from code
-    item = format("item:%s", strsub(item, i1, i2))
-  end
-
-  local item_link, 
-    name, item_string, rarity,
-    level, item_type, item_subtype,
-    stack, item_invtype, texture
-    = util.makeItemLink(item)
-  
-  --Unable to make viable item link so show an item id as item string
-  if not item_link and tonumber(item) then 
-    return format("item:%d:0:0:0", item)
-  end
-  
-  return item_link, 
-    name, item_string, rarity,
-    level, item_type, item_subtype,
-    stack, _G[item_invtype], texture
-end
+-- [LEGACY] Re-export a widely-used old reference
+M.safeItemLink = util.safeItemLink
 
 -- Session-specific
 
@@ -164,6 +143,11 @@ do
     if current and current.stop then
       return true, current
     end
+  end
+  
+  function M.hasMaxSessions()
+    local db = A.getCharConfig("fa.session")
+    return getn(db.sessions) == db.max_sessions
   end
 end
 
@@ -288,7 +272,7 @@ do
   function countItems(items)
     if not items then return end
     local count = 0
-    for code, v in pairs(items) do
+    for _, v in pairs(items) do
       count = count + v.count
     end
     return count
@@ -388,12 +372,89 @@ do
     if not current then return end
     return getSessionTotalValue(current)
   end
+  
+  do
+    local PERIOD = 60*60
+    local pricingValue = pricing.value
+    
+    function M.isValidPerHourValue(session, money_loot_time, item_loot_time)
+      local _, current = isCurrent()
+      if not current or not session or current ~= session then return end
+      if not money_loot_time and not item_loot_time then return end
+      
+      if money_loot_time and 
+          diffTime(currentTime(), money_loot_time) > PERIOD then
+        return false
+      end
+      
+      if item_loot_time and
+          diffTime(currentTime(), item_loot_time) > PERIOD then
+        return false
+      end
+      
+      return true
+    end
+    
+    function M.getCurrentPerHourValue()
+      local _, current = isCurrent()
+      if not current then return end
+      
+      local start_time = current.start
+      local item_loots = current.loots
+      local money_loots = current.money_loots
+      local item_loots_count = getn(item_loots)
+      local money_loots_count = getn(money_loots)
+      
+      if item_loots_count < 1 and money_loots_count < 1 then
+        return 0
+      end
+      
+      local value = 0
+      local money_loot_index, money_loot_time
+      if money_loots_count > 0 then
+        for i=1,money_loots_count do
+          money_loot_index = money_loots_count + 1 - i
+          local loot = money_loots[money_loot_index]
+          local loot_time = addTime(start_time, loot[2])
+          
+          if diffTime(currentTime(), loot_time) <= PERIOD then
+            value = value + loot[3]
+            money_loot_time = loot_time
+          else
+            break
+          end
+        end
+      end
+      
+      local item_loot_index, item_loot_time
+      if item_loots_count > 0 then
+        for i=1,item_loots_count do
+          item_loot_index = item_loots_count + 1 - i
+          local loot = item_loots[item_loot_index]
+          local loot_time = addTime(start_time, loot[2])
+          
+          if diffTime(currentTime(), loot_time) <= PERIOD then
+            local code = loot[3]
+            local count = loot[4]
+            local item_value = pricingValue(code)
+            value = value + (item_value or 0) * count
+            item_loot_time = loot_time
+          else
+            break
+          end
+        end
+      end
+
+      return value, current, money_loot_time, item_loot_time
+    end
+  end
 end
 
 do
   local parseItemCode = util.parseItemCode
   local pricingValue = pricing.value
   local sortRecords1 = util.sortRecords1
+  local safeItemLink = util.safeItemLink
   
   function getSessionLoot(session)    
     local loots = session.loots
@@ -448,25 +509,31 @@ do
     local records = getSessionLoot(current)
     
     local money_loots = current.money_loots
-    local n = getn(money_loots)
-    if n < 1 then return records end
     
-    local start_time = current.start
-    local zones = current.zones
-    
-    if not records then records = {} end
-    for i, loot in ipairs(money_loots) do
-      local record = {}
-      record["loot_id"] = i
-      local zone_id = loot[1]
-      local start_delta = loot[2]
-      local money = loot[3]
-      local type_id = loot[4]
-      record["loot_time"] = addTime(start_time, start_delta)
-      record["zone"] = zones[zone_id]
-      record["money"] = money
-      record["type"] = money_types[type_id]
-      tinsert(records, record)
+    -- Only list money records if there is a current non-zero money threshold
+    local db = A.getCharConfig("fa.notice")
+    local threshold = db.money_threshold or NONE
+    if getn(money_loots) > 0 and lne(threshold, NONE) and threshold > 0 then
+      local start_time = current.start
+      local zones = current.zones
+      
+      if not records then records = {} end
+      for i, loot in ipairs(money_loots) do
+        local record = {}
+        record["loot_id"] = i
+        local zone_id = loot[1]
+        local start_delta = loot[2]
+        local money = loot[3]
+        local type_id = loot[4]
+        
+        if money >= threshold then
+          record["loot_time"] = addTime(start_time, start_delta)
+          record["zone"] = zones[zone_id]
+          record["money"] = money
+          record["type"] = money_types[type_id]
+          tinsert(records, record)
+        end
+      end
     end
     
     local sorted_records = sortRecords1(records, "loot_time")
@@ -474,7 +541,7 @@ do
     return sorted_records
   end
   
-  do
+  do    
     function M.lootSubtotal(loots)
       local counter = {}
       for i, item in ipairs(loots) do
@@ -519,6 +586,8 @@ do
       local field = remap[k] or k
       return rawget(t, field)
     end}
+    
+    local safeItemLink = util.safeItemLink
     
     function M.searchAllLoot(filters)
       local searchByFilter = filter.searchByFilter
@@ -569,7 +638,7 @@ do
             local found = false
             for i,name in ipairs(groups) do
               local group = filter.getFilterGroup(name)
-              if group[item["name"]] then
+              if group[item["id"]] then
                 found = true
                 break
               end
@@ -600,9 +669,9 @@ do
 end
 
 do
+  local safeItemLink = util.safeItemLink
   local sortRecords = util.sortRecords
   local parseItemCode = util.parseItemCode
-  local makeItemString = util.makeItemString
   local pricingValue = pricing.value
   
   local function preSort(items)

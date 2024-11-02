@@ -1,15 +1,13 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.session'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
 
 local util = A.requires(
   'util.string',
   'util.time',
-  'util.chat'
+  'util.chat',
+  'util.money'
 )
 
 local source = A.require 'fa.value.source'
@@ -35,7 +33,7 @@ do
         index=index,
         session=session,
         name=session.name,
-        total=abacus:FormatMoneyFull(value, true)})
+        total=util.formatMoneyFull(value, true)})
     end
     return status
   end
@@ -49,10 +47,10 @@ do
       return
     end
     
-    util.systemChat(L["Sessions:"])
+    util.formatChat(L["Sessions:"])
     local session_status = sessionStatus()
     for i, status in ipairs(session_status) do
-      util.systemChat('%s [%d] "%s" %s', 
+      util.formatChat('%s [%d] "%s" %s', 
         status.code, 
         status.index,
         status.name,
@@ -84,18 +82,18 @@ do
     
     local running = not session.stop
     
-    util.systemChat(L["Detail of session%s:"], running and "" 
+    util.formatChat(L["Detail of session%s:"], running and "" 
       or L[" (stopped)"])
-    util.systemChat("%s [%d] %s", codeStatus(running), session_index, 
+    util.formatChat("%s [%d] %s", codeStatus(running), session_index, 
       session.name)
     
     local zone_text = sessionZone(session)
     local duration = sessionDuration(session)
     local currency = sessionMoney(session)
     
-    util.systemChat(L["Zone: %s"], zone_text)
-    util.systemChat(L["Duration: %s"], abacus:FormatDurationFull(duration))
-    util.systemChat(L["Currency: %s"], abacus:FormatMoneyFull(currency, true))
+    util.formatChat(L["Zone: %s"], zone_text)
+    util.formatChat(L["Duration: %s"], util.formatDurationFull(duration))
+    util.formatChat(L["Currency: %s"], util.formatMoneyFull(currency, true))
     
     local desc = {
       items=L["Item"],
@@ -107,19 +105,17 @@ do
     for _, store in ipairs({ "items", "hots" }) do
       local items_count = sessionItemsCount(session, store)
       local items_value = sessionItemsValue(session, store)
-      util.systemChat(L["%s count: %d"], desc[store], items_count)
-      util.systemChat(L["%s value: %s"], desc[store], 
-        abacus:FormatMoneyFull(items_value, true))
+      util.formatChat(L["%s count: %d"], desc[store], items_count)
+      util.formatChat(L["%s value: %s"], desc[store], 
+        util.formatMoneyFull(items_value, true))
       if store == "items" then total_value = total_value + items_value end
     end
     
-    util.systemChat(L["Total value: %s"], 
-      abacus:FormatMoneyFull(total_value, true))
-      
-    local gph = floor(total_value / (duration/3600))
+    util.formatChat(L["Total value: %s"], 
+      util.formatMoneyFull(total_value, true))
     
-    util.systemChat(L['"Gold Per Hour": %s'], 
-      abacus:FormatMoneyFull(gph, true))
+    local gph = floor(total_value / (duration/3600))
+    util.formatChat(L['"Gold Per Hour": %s'], util.formatMoneyFull(gph, true))
   end
   
   function showSessionItems(store, session_index, max_count, all)
@@ -171,7 +167,7 @@ do
       return
     end
     
-    util.systemChat(store_info.desc)
+    util.formatChat(store_info.desc)
     
     local sorted_array = sortItemsByValue(items, true)
     
@@ -188,8 +184,8 @@ do
       local rarity = item.rarity
       if not all or all and rarity and rarity >= filter_quality then
         local value = item.value
-        util.systemChat("[%d] %dx %s = %s", counter, item.count, item.item_link, 
-          abacus:FormatMoneyFull(value, true))
+        util.formatChat("[%d] %dx %s = %s", counter, item.count, item.item_link, 
+          util.formatMoneyFull(value, true))
         total = total + value
         
         if not all and counter >= max_count then break end
@@ -198,7 +194,7 @@ do
       end
     end
     
-    util.systemChat(L["Total: %s"], abacus:FormatMoneyFull(total, true))
+    util.formatChat(L["Total: %s"], util.formatMoneyFull(total, true))
   end
   
   function showSessionLoot(session_index, max_count)
@@ -239,15 +235,15 @@ do
     for i=m,n do
       local item = session_loot[i]
       local value = item["value"]
-      util.systemChat("%s %s %sx %s %s", 
+      util.formatChat("%s %s %sx %s %s", 
         isoDateTime(item["loot_time"]),
         util.strTrunc(item["zone"], 12, "..."), 
         item["count"],
         item["item_link"],
-        abacus:FormatMoneyFull(value, true))
+        util.formatMoneyFull(value, true))
     end
 
-    util.systemChat(L["Found %d results."], n - m + 1)
+    util.formatChat(L["Found %d results."], n - m + 1)
   end
   
   function searchSessions(msg)
@@ -277,19 +273,19 @@ do
   
     local result = searchAllLoot(filters)
     for i, item in ipairs(result) do
-      util.systemChat("%s %s %sx %s %s", 
+      util.formatChat("%s %s %sx %s %s", 
         isoDateTime(item["loot_time"]),
         util.strTrunc(item["zone"], 12, "..."), 
         item["count"],
         item["item_link"],
-        abacus:FormatMoneyFull(item["value"], true))
+        util.formatMoneyFull(item["value"], true))
     end
     
     local n = result and getn(result)
     if n then
       local sum = lootSubtotal(result)
-      util.systemChat(L["Results: %d loots, %d items, %s value"], 
-        n, sum.count, abacus:FormatMoneyFull(sum.value, true))
+      util.formatChat(L["Results: %d loots, %d items, %s value"], 
+        n, sum.count, util.formatMoneyFull(sum.value, true))
     end
   end
 

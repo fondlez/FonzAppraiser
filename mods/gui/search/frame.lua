@@ -1,10 +1,9 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.search'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
+local util = A.require 'util.money'
 
 local gui = A.require 'fa.gui'
 local main = A.require 'fa.gui.main'
@@ -87,6 +86,7 @@ do
     parent:SetText("")
     parent:SetFocus()
     parent:ClearFocus()
+    searchButtonOnClick()
   end)
 
   editbox:SetScript("OnEscapePressed", function()
@@ -172,7 +172,7 @@ do
   item_value_text:SetText(", -")
   item_value_text.updateDisplay = function(self, value)
     self:SetText(value 
-      and format(L[", %s value"], abacus:FormatMoneyFull(value, true)) or "-")
+      and format(L[", %s value"], util.formatMoneyFull(value, true)) or "-")
   end
 end
 

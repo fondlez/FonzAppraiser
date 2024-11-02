@@ -1,12 +1,12 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.session'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
-
-local util = A.requires 'util.string'
+local util = A.requires(
+  'util.string',
+  'util.money'
+)
 
 if not A.options then
   A.options = {
@@ -19,7 +19,7 @@ A.options.args["Start"] = {
   type = "execute",
   name = L["Session start"],
   desc = L["Starts a session"],
-  func = startSession,
+  func = startSessionConfirm,
 }
 A.options.args["Stop"] = {
   type = "execute",
@@ -45,14 +45,14 @@ A.options.args["Search"] = {
   type = "text",
   name = L["Search sessions"],
   desc = L["Search loot from all sessions"],
-  get = function() return "" end,
+  get = nil,
   set = function(msg)
     searchSessions(msg)
   end,
   message = string.rep("=", 10),  
   usage = L["<string>"],
   validate = function(msg)
-    msg = msg and util.strtrim(msg)
+    msg = msg and util.isNotSpaceOrEmpty(msg)
     return not not msg
   end,
   guiHidden = true,
@@ -82,7 +82,7 @@ A.options.args["Session"] = {
   desc = L["Shows detail of sessions"],
   get = function() 
     local running, current = isCurrent()
-    return running and abacus:FormatMoneyFull(
+    return running and util.formatMoneyFull(
       sessionItemsValue(current) + sessionMoney(current), true)
   end,
   set = detailSessions,

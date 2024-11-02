@@ -1,10 +1,9 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.gui.sessions'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
+local util = A.require 'util.money'
 
 local session = A.require 'fa.session'
 local palette = A.require 'fa.palette'
@@ -102,7 +101,7 @@ do
   button:SetScript("OnEnter", purgeAll_OnEnter)
   button:SetScript("OnLeave", purgeAll_OnLeave)
   
-  local name = "FonzAppraiser_PurgeAllSessions"
+  local name = A.name .. "_PurgeAllSessions"
   M.purgeall_confirm_dialog_name = name
   
   StaticPopupDialogs[name] = {
@@ -175,11 +174,28 @@ do
     total_value:SetPoint("TOPRIGHT", duration_text, "BOTTOMRIGHT", 0, -3)
     total_value:SetJustifyH("RIGHT")
     total_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+      value = value and util.formatMoneyFull(value, true, nil, true) 
+        or "-"
       self:SetText(value)
     end
     total_value.update = updateTotalValue
+  end
+  
+  do
+    local gph_value = text_frame:CreateFontString(nil, "ARTWORK",
+      "GameFontHighlightSmall")
+    M.gph_value = gph_value
+    text_frame.gph_value = gph_value
+    gph_value:SetPoint("TOPRIGHT", total_value, "TOPLEFT", 0, 0)
+    gph_value:SetJustifyH("CENTER")
+    gph_value.updateDisplay = function(self, value)
+      if value then
+        self:SetText(string.format(L["(%s / hour) "], 
+          util.formatMoneyFull(value, true, nil, true)))
+      else
+        self:SetText("")
+      end
+    end
   end
   
   do
@@ -197,8 +213,8 @@ do
     currency_value:SetPoint("TOPRIGHT", total_value, "BOTTOMRIGHT", 0, -3)
     currency_value:SetJustifyH("RIGHT")
     currency_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+      value = value and util.formatMoneyFull(value, true, nil, true) 
+        or "-"
       self:SetText(value)
     end
     currency_value.update = updateCurrencyValue
@@ -223,8 +239,8 @@ do
     items_value:SetPoint("TOPRIGHT", currency_value, "BOTTOMRIGHT", 0, -3)
     items_value:SetJustifyH("RIGHT")
     items_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+      value = value and util.formatMoneyFull(value, true, nil, true) 
+        or "-"
       self:SetText(value)
     end
     items_value.update = updateItemsValue
@@ -251,8 +267,8 @@ do
     hot_value:SetPoint("TOPRIGHT", items_value, "BOTTOMRIGHT", 0, -3)
     hot_value:SetJustifyH("RIGHT")
     hot_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+      value = value and util.formatMoneyFull(value, true, nil, true) 
+        or "-"
       self:SetText(value)
     end
     hot_value.update = updateHotValue

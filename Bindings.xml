@@ -2,10 +2,10 @@
 	<Binding name="FA_SHOWMAIN" header="FONZAPPRAISER">
     FonzAppraiser:toggleMainWindow()
 	</Binding>
-	<Binding name="FA_STARTSESSION" header="FONZAPPRAISER">
+	<Binding name="FA_STARTSESSION">
     FonzAppraiser:startSession()
 	</Binding>
-	<Binding name="FA_STOPSESSION" header="FONZAPPRAISER">
+	<Binding name="FA_STOPSESSION">
     FonzAppraiser:stopSession()
 	</Binding>
 </Bindings>

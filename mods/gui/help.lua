@@ -1,8 +1,7 @@
 local A = FonzAppraiser
+local L = A.locale
 
-A.module 'fa.gui.help'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
+A.module('fa.gui.help', {'util.compat'})
 
 local gui = A.require 'fa.gui'
 

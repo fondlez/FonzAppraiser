@@ -1,10 +1,10 @@
 local A = FonzAppraiser
+local L = A.locale
 
-A.module 'fa.gui.config'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
+A.module('fa.gui.config', {'util.compat'})
 
 local gui = A.require 'fa.gui'
+local main = A.require 'fa.gui.main'
 
 do
   local frame = CreateFrame("Frame", "FonzAppraiserConfigFrame", UIParent)
@@ -49,6 +49,8 @@ do
     A.trace("Config window - Close Button - OnClick")
     PlaySoundFile(gui.sounds.file_close_char)
     HideUIPanel(this:GetParent())
+    
+    A:guiUpdate()
   end)
 end
 
@@ -99,15 +101,21 @@ do
     gui.hideTooltip()
   end
   
-  local tab1 = tabButton(frame, L["Notice"], 1)
+  local tab1 = tabButton(frame, L["General"], 1)
   PanelTemplates_TabResize(nil, tab1)
   tab1:SetPoint("CENTER", frame, "BOTTOMLEFT", 60, -10)
   tab1.onSelect = hideUnselected
   
+  local tab2 = tabButton(frame, L["Notice"], 2)
+  PanelTemplates_TabResize(nil, tab2)
+  tab2:SetPoint("LEFT", tab1, "RIGHT", -16, 0)
+  tab2.onSelect = hideUnselected
+  
+  -- Note. Check that all tab child frames, except tab1's, start with :Hide()
   frame:RegisterEvent("PLAYER_ENTERING_WORLD")
   frame:SetScript("OnEvent", function()
     if event == "PLAYER_ENTERING_WORLD" then
-      PanelTemplates_SetNumTabs(frame, 1)
+      PanelTemplates_SetNumTabs(frame, 2)
       PanelTemplates_SetTab(frame, selected_tab_id)
     end
   end)
@@ -130,6 +138,7 @@ function M.toggleWindow()
     frame:Show()
   end
 end
+A.toggleConfigWindow = toggleWindow
 
 -- MODULE OPTIONS --
 

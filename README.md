@@ -1,6 +1,6 @@
 # ![Addon Icon](doc/img/icon.png) FonzAppraiser - World of Warcraft Addon
 
-FonzAppraiser is an addon for World of Warcraft (1.12 and 2.4.3 clients) to 
+FonzAppraiser is an addon for World of Warcraft (1.12, 2.4.3, 3.3.5 clients) to 
 track the value of personal loot.
 
 ## Core Features
@@ -12,8 +12,8 @@ track the value of personal loot.
 * Loot from corpses and ground loot from gathering nodes is tracked.
 * A quick access, global item quality filter is always available.
 * Loot is valued by a pricing system, with the vendor/merchant as default.
-* Pricing systems currently supported: vendor, "aux-addon", and 
-"Auctioneer" addons.
+* Pricing systems currently supported: vendor, "aux-addon", "Auctioneer",
+"Auctionator" (TBC+), "TradeSkillMaster" aka. TSM (WotLK) addons.
 * Quickly switch between pricing systems at any time.
 * A Target or goal for the current session value can be easily created.
 * When thresholds for item value, money received or Target are met Notices can
@@ -155,7 +155,7 @@ addons and perhaps other types of chat messages.
 The original idea and implementation for this addon were by 
 **[fondlez](https://github.com/fondlez)**.
 
-Ever leveled to 60 on a fresh, but low population server and are now faced
+Ever leveled to max level on a fresh, but low population server and are now faced
 with the daunting task of finding the initial gold to do ... anything? This
 addon was written because I thought tracking my progress towards specific goals 
 would be a lot more fun! I hope you find the same or even find other uses for

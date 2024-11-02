@@ -1,14 +1,12 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.misc'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
-
 local util = A.requires(
   'util.item',
-  'util.bag'
+  'util.bag',
+  'util.money'
 )
 
 local pricing = A.require 'fa.value.pricing'
@@ -84,9 +82,9 @@ function M.bagValue(reverseSort)
   end
   
   for _, v in pairs(sort_array) do
-    A:Print(format("%dx %s = %s", v.count, v.item_link, 
-      abacus:FormatMoneyFull(v.value, true)))
+    A:print(format("%dx %s = %s", v.count, v.item_link, 
+      util.formatMoneyFull(v.value, true)))
   end
   
-  A:Print(format(L["Total: %s"], abacus:FormatMoneyFull(total, true)))
+  A:print(format(L["Total: %s"], util.formatMoneyFull(total, true)))
 end

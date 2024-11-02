@@ -1,8 +1,7 @@
 local A = FonzAppraiser
+local L = A.locale
 
-A.module 'fa.gui.main'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
+A.module('fa.gui.main', {'util.compat'})
 
 local pricing = A.require 'fa.value.pricing'
 local filter = A.require 'fa.filter'
@@ -38,7 +37,7 @@ do
   
   local fontstring = frame:CreateFontString(nil, "ARTWORK",
     "GameFontNormal")
-  fontstring:SetText(format("FonzAppraiser %s", A.ver))
+  fontstring:SetText(format("FonzAppraiser %s", A.version))
   fontstring:SetPoint("TOP", texture, "TOP", 0, -13)
 end
 
@@ -159,6 +158,7 @@ do
   tab4:SetPoint("LEFT", tab3, "RIGHT", -16, 0)
   tab4.onSelect = hideUnselected
   
+  -- Note. Check that all tab child frames, except tab1, start with :Hide()
   frame:RegisterEvent("PLAYER_ENTERING_WORLD")
   frame:SetScript("OnEvent", function()
     if event == "PLAYER_ENTERING_WORLD" then
@@ -182,10 +182,12 @@ do
   function updateQualityDropdown(self)
     local db = A.getCharConfig("fa.filter")
     UIDropDownMenu_SetSelectedValue(self, db.quality)
+    UIDropDownMenu_SetText(db.quality, self)
   end
   
   local function onClick()
     UIDropDownMenu_SetSelectedValue(quality_dropdown, this.value)
+    UIDropDownMenu_SetText(this.value, quality_dropdown)
     local db = A.getCharConfig("fa.filter")
     db.quality = this.value
     update()
@@ -204,10 +206,12 @@ do
         rarity_name)
       info.textR, info.textG, info.textB = GetItemQualityColor(i)
       info.func = onClick
+      info.checked = false
       UIDropDownMenu_AddButton(info)
     end
     local db = A.getCharConfig("fa.filter")
     UIDropDownMenu_SetSelectedValue(self, db.quality)
+    UIDropDownMenu_SetText(db.quality, self)
   end
 
   do
@@ -229,10 +233,12 @@ do
   function updatePricingDropdown(self)
     local db = A.getCharConfig("fa.value.pricing")
     UIDropDownMenu_SetSelectedValue(self, db.pricing)
+    UIDropDownMenu_SetText(db.pricing, self)
   end
   
   local function onClick()
     UIDropDownMenu_SetSelectedValue(pricing_dropdown, this.value)
+    UIDropDownMenu_SetText(this.value, pricing_dropdown)
     local db = A.getCharConfig("fa.value.pricing")
     db.pricing = this.value
     A:guiUpdate()
@@ -248,10 +254,12 @@ do
       info.tooltipTitle = L["Item Pricing"]
       info.tooltipText = format("%s", system.description)
       info.func = onClick
+      info.checked = false
       UIDropDownMenu_AddButton(info)
     end
     local db = A.getCharConfig("fa.value.pricing")
     UIDropDownMenu_SetSelectedValue(self, db.pricing)
+    UIDropDownMenu_SetText(db.pricing, self)
   end
 
   do

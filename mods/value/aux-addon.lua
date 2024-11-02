@@ -1,12 +1,11 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.value.aux'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
+local client = A.require 'util.client'
 local util = A.require 'util.item'
 
-local session = A.require 'fa.session'
 local pricing = A.require 'fa.value.pricing'
 
 do
@@ -18,8 +17,10 @@ do
         A.info("No aux-addon detected")
         addon_warning_already = true
       end
-      return
+      
+      return false
     end
+    
     return true
   end
 end
@@ -39,9 +40,13 @@ do
     local item_link, 
     name, item_string, rarity,
     level, item_type, item_subtype,
-    stack, item_invtype, texture = makeItemLink(item_string)
+    stack, item_invtype, texture, ilevel = makeItemLink(item_string)
     
-    return item_invtype, rarity, level
+    if client.is_tbc then
+      return item_invtype, rarity, ilevel
+    else
+      return item_invtype, rarity, level
+    end
   end
 end
 
@@ -52,7 +57,7 @@ function historyValue(code)
   local history
   ok, history = pcall(require, "aux.core.history")
   if not ok or not history then 
-    A.info("Error loading aux.core.history module")
+    A.warn("Error loading aux.core.history module")
     return
   end
   
@@ -61,7 +66,7 @@ function historyValue(code)
   local value
   ok, value = pcall(history.value, item_key)
   if not ok then
-    A.info("aux.core.history - history.value() call failed")
+    A.warn("aux.core.history - history.value() call failed")
     return
   end
   
@@ -75,7 +80,7 @@ function historyMarketValue(code)
   local history
   ok, history = pcall(require, "aux.core.history")
   if not ok or not history then 
-    A.info("Error loading aux.core.history module")
+    A.warn("Error loading aux.core.history module")
     return
   end
   
@@ -84,7 +89,7 @@ function historyMarketValue(code)
   local value
   ok, value = pcall(history.market_value, item_key)
   if not ok then
-    A.info("aux.core.history - history.market_value() call failed")
+    A.warn("aux.core.history - history.market_value() call failed")
     return
   end
   
@@ -98,23 +103,22 @@ function disenchantValue(code)
   local disenchant
   ok, disenchant = pcall(require, "aux.core.disenchant")
   if not ok or not disenchant then 
-    A.info("Error loading aux.core.disenchant module")
+    A.warn("Error loading aux.core.disenchant module")
     return
   end
   
-  local slot, rarity, level = codeToInfo(code)
+  local slot, rarity, level_or_ilevel = codeToInfo(code)
   
   local value
-  ok, value = pcall(disenchant.value, slot, rarity, level)
+  ok, value = pcall(disenchant.value, slot, rarity, level_or_ilevel)
   if not ok then
-    A.info("aux.core.history - disenchant.value() call failed")
+    A.warn("aux.core.history - disenchant.value() call failed")
     return
   end
 
   return value
 end
 
-pricing.addSystem(L["TV.AUX"], L["aux-addon: tooltip value"], historyValue)
-pricing.addSystem(L["TD.AUX"], L["aux-addon: tooltip daily"], historyMarketValue)
-pricing.addSystem(L["DE.AUX"], L["aux-addon: tooltip disenchant value"], 
-  disenchantValue)
+pricing.addSystem("TV.AUX", L["aux-addon: tooltip value"], historyValue)
+pricing.addSystem("TD.AUX", L["aux-addon: tooltip daily"], historyMarketValue)
+pricing.addSystem("DE.AUX", L["aux-addon: disenchant value"], disenchantValue)

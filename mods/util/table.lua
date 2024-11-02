@@ -2,17 +2,32 @@ local A = FonzAppraiser
 
 A.module 'util.table'
 
-do
-  local setmetatable, setn = setmetatable, table.setn
-  
-  function M.wipe(t)
-    setmetatable(t, nil)
-    for i in pairs(t) do
-      t[i] = nil
-    end
-    setn(t, 0)
+local client = A.require 'util.client'
+
+function wipe(t)
+  local mt = getmetatable(t) or {}
+  if not mt.__mode or mt.__mode ~= "kv" then
+    mt.__mode = "kv"
+    t = setmetatable(t, mt)
   end
+  for k in pairs(t) do
+    t[k] = nil
+  end
+  return t
+end
+
+if client.is_wotlk_or_more then
+  M.wipe = _G.wipe
+  M.unpack = _G.unpack
+  M.select = _G.select
+elseif client.is_tbc then
+  M.wipe = wipe
+  M.unpack = _G.unpack
+  M.select = _G.select
+else
+  M.wipe = wipe
   
+  -- Vanilla/Lua 5.0 unpack() does not accept second and third arguments
   function M.unpack(t, start, stop)    
     start = start or 1
     stop = stop or getn(t)
@@ -26,9 +41,12 @@ do
       return t[start], unpack(t, start + 1, stop)
     end
   end
-
+  
+  -- Vanilla-specific code, so 'arg' global safe to assume present for ...
+  -- ... is Lua foward-compatible only when used as a function parameter
+  -- 'arg' global for variadic arguments is not foward-compatible in the WoW API
   function M.select(index, ...)
-    if index == "#" then return arg.n end
+    if index == "#" then return getn(arg) end
     return unpack(arg, index)
   end
 end
@@ -47,6 +65,53 @@ function M.insertUnique(t, value)
     tinsert(t, value)
   end
   return t
+end
+
+do
+  local sort = table.sort
+  
+  function M.keys(t)
+    if not t then return end
+    local result = {}
+    for k,v in pairs(t) do
+      tinsert(result, k)
+    end
+    return result
+  end
+
+  function M.sortedKeys(t, cmp)
+    if not t then return end
+    local result = keys(t)
+    sort(result, cmp)
+    return result
+  end
+  
+  function M.sortedPairs(t, cmp)
+    if not t then return end
+    local result = keys(t)
+    sort(result, cmp)
+    local i = 0
+    local iterator = function()
+      i = i + 1
+      local key = result[i]        
+      return key, key and t[key]
+    end
+    return iterator
+  end
+end
+
+do
+  local tolower = string.lower
+
+  function M.keyslower(t)
+    local l = {}
+    for k, v in pairs(t) do
+      if type(k) == "string" then
+        l[tolower(k)] = v
+      end
+    end
+    return l
+  end
 end
 
 do

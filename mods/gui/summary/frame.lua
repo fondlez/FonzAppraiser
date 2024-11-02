@@ -1,10 +1,9 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.gui.summary'
 
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
+local util = A.require 'util.money'
 
 local palette = A.require 'fa.palette'
 local gui = A.require 'fa.gui'
@@ -126,11 +125,28 @@ do
     total_value:SetPoint("TOPRIGHT", duration_text, "BOTTOMRIGHT", 0, -3)
     total_value:SetJustifyH("RIGHT")
     total_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+      value = value and util.formatMoneyFull(value, true, nil, true) 
+        or "-"
       self:SetText(value)
     end
     total_value.update = updateTotalValue
+  end
+  
+  do
+    local gph_value = text_frame:CreateFontString(nil, "ARTWORK",
+      "GameFontHighlightSmall")
+    M.gph_value = gph_value
+    text_frame.gph_value = gph_value
+    gph_value:SetPoint("TOPRIGHT", total_value, "TOPLEFT", 0, 0)
+    gph_value:SetJustifyH("CENTER")
+    gph_value.updateDisplay = function(self, value)
+      if value then
+        self:SetText(string.format(L["(%s / hour) "], 
+          util.formatMoneyFull(value, true, nil, true)))
+      else
+        self:SetText("")
+      end
+    end
   end
   
   do
@@ -148,8 +164,8 @@ do
     currency_value:SetPoint("TOPRIGHT", total_value, "BOTTOMRIGHT", 0, -3)
     currency_value:SetJustifyH("RIGHT")
     currency_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+      value = value and util.formatMoneyFull(value, true, nil, true) 
+        or "-"
       self:SetText(value)
     end
     currency_value.update = updateCurrencyValue
@@ -180,8 +196,8 @@ do
     items_value:SetPoint("TOPRIGHT", currency_value, "BOTTOMRIGHT", 0, -3)
     items_value:SetJustifyH("RIGHT")
     items_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+      value = value and util.formatMoneyFull(value, true, nil, true) 
+        or "-"
       self:SetText(value)
     end
     items_value.update = updateItemsValue
@@ -208,8 +224,8 @@ do
     hot_value:SetPoint("TOPRIGHT", items_value, "BOTTOMRIGHT", 0, -3)
     hot_value:SetJustifyH("RIGHT")
     hot_value.updateDisplay = function(self, value)
-      --Final argument to custom Abacus library creates zero padding digits.
-      value = value and abacus:FormatMoneyFull(value, true, nil, true) or "-"
+      value = value and util.formatMoneyFull(value, true, nil, true) 
+        or "-"
       self:SetText(value)
     end
     hot_value.update = updateHotValue
@@ -221,12 +237,12 @@ do
     hot_tooltip_frame:SetScript("OnLeave", hotItemTooltip_OnLeave)
   end
   
-  do
+  do  
     local start_button = gui.button(text_frame, nil, 100, 24, "Start Session")
     M.start_button = start_button
     text_frame.start_button = start_button
     start_button:SetPoint("TOPLEFT", hot_text, 0, -14)
-    start_button:SetScript("OnClick", startButton_OnClick)
+    start_button:SetScript("OnClick", startButton_ConfirmOnClick)
     start_button.update = updateStartButton
     
     local stop_button = gui.button(text_frame, nil, 100, 24, "Stop Session")
@@ -253,8 +269,8 @@ do
     target_value:SetJustifyH("RIGHT")
     target_value.updateDisplay = function(self, value, goal)
       if goal and goal > 0 then
-        goal = abacus:FormatMoneyFull(goal, true)
-        value = value and abacus:FormatMoneyFull(value, true) or "-"
+        goal = util.formatMoneyFull(goal, true)
+        value = value and util.formatMoneyFull(value, true) or "-"
         self:SetText(string.format("%s / %s", value, goal))
       else
         self:SetText(NONE)
@@ -265,43 +281,41 @@ do
 end
 
 do
-  local progress_bar = CreateFrame("StatusBar", "$parentProgressBar", summary)
-  M.progress_bar = progress_bar
-  progress_bar:SetHeight(16)
-  progress_bar:SetPoint("TOPLEFT", text_frame, "BOTTOMLEFT", 0, -3)
-  progress_bar:SetPoint("BOTTOMRIGHT", summary)
-  progress_bar:SetBackdrop{
+  local fixture = CreateFrame("Frame", "$parentProgressBarFixture", summary)
+  fixture:SetPoint("TOPLEFT", text_frame, "BOTTOMLEFT", 0, -3)
+  fixture:SetPoint("BOTTOMRIGHT", summary)
+  fixture:SetBackdrop{
 		tile = false,
     bgFile = A.addon_path .. [[\img\statusbar\Fifths]],
-		edgeSize = 16,
+    edgeSize = 16,
 		edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
     insets={ left=3, right=3, top=3, bottom=3 },
 	}
-  local r, g, b, a = progress_bar:GetBackdropColor()
-  progress_bar:SetBackdropColor(palette.color.nero3())
-  progress_bar.border_color = palette.color.transparent
-  progress_bar:SetBackdropBorderColor(progress_bar.border_color())
+  fixture:SetBackdropColor(palette.color.nero3())
+  fixture.border_color = palette.color.transparent
+  fixture:SetBackdropBorderColor(fixture.border_color())
+  
+  local progress_bar = CreateFrame("StatusBar", "$parentProgressBar", fixture)
+  M.progress_bar = progress_bar
+  progress_bar:SetOrientation("HORIZONTAL")
+  progress_bar:SetPoint("TOPLEFT", fixture, 5, -4)
+  progress_bar:SetPoint("BOTTOMRIGHT", fixture, -4, 4)
   
   progress_bar:SetStatusBarTexture(A.addon_path
     .. [[\img\statusbar\UI-Achievement-Parchment-Horizontal]])
-  local background = progress_bar:GetStatusBarTexture()
-  background:SetDrawLayer("BORDER")
-  background:ClearAllPoints()
+  local statusbar = progress_bar:GetStatusBarTexture()
+  statusbar:SetDrawLayer("BORDER")
   -- Be aware that StatusBar:GetWidth() returns the underlying texture 
   -- dimensions, not its dynamic cropped "fill" version within the status bar.
   -- Also, changes to its anchors affects the fill width for OnValueChanged
   -- calculations.
-  local background_left_offset, background_right_offset = 5, -5
-  background:SetPoint("TOPLEFT", background_left_offset, -5)
-  background:SetPoint("BOTTOMRIGHT", background_right_offset, 5)
-  progress_bar.background = background
-  progress_bar.background.width = progress_bar:GetWidth()
-    - background_left_offset + background_right_offset
+  progress_bar.statusbar = statusbar
+  progress_bar.statusbar.width = progress_bar:GetWidth()
   
   local fill_text = progress_bar:CreateFontString()
   progress_bar.fill_text = fill_text
   fill_text:SetFont(A.addon_path .. [[\font\FuturaBold.ttf]], 10)
-  fill_text:SetPoint("RIGHT", background)
+  fill_text:SetPoint("RIGHT", progress_bar, "RIGHT", -5, 0)
   
   do
     local spark = progress_bar:CreateTexture(nil, "OVERLAY")
@@ -338,11 +352,11 @@ do
   do
     local shine = progress_bar:CreateTexture(nil, "ARTWORK")
     progress_bar.shine = shine
-    shine:SetPoint("TOPLEFT", progress_bar, 8, -3)
+    shine:SetPoint("TOPLEFT", progress_bar, 8, 0)
     --Use the normalized width of the sparkle section and a height rescaled with
     --the same aspect ratio as original section.
-    shine:SetWidth(58/512 * progress_bar:GetWidth()*1.1)
-    shine:SetHeight(71/58 * progress_bar:GetHeight()*1.1)
+    shine:SetWidth(58/512 * progress_bar:GetWidth())
+    shine:SetHeight(71/58 * progress_bar:GetHeight()*0.8)
     shine:SetTexture(A.addon_path
       .. [[\img\statusbar\UI-Achievement-Alert-Glow]])
     shine:SetBlendMode("ADD")
@@ -359,7 +373,6 @@ do
     shine_animation.play = playShineAnimation
   end
   
-  progress_bar:SetScript("OnValueChanged", progressBar_OnValueChanged)
   progress_bar:SetScript("OnShow", progressBar_OnShow)
   progress_bar:EnableMouse(true)
   progress_bar:SetScript("OnMouseUp", progressBar_OnClick)

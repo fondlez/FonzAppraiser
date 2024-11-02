@@ -1,10 +1,7 @@
 local A = FonzAppraiser
+local L = A.locale
 
 A.module 'fa.session'
-
-local L = AceLibrary("AceLocale-2.2"):new("FonzAppraiser")
-
-local abacus = AceLibrary("Abacus-2.0")
 
 local util = A.requires(
   'util.string',
@@ -13,7 +10,6 @@ local util = A.requires(
 )
 
 local notice = A.require 'fa.notice'
-local gui_main = A.require 'fa.gui.main'
 
 -- SESSION UPDATES --
 
@@ -33,12 +29,12 @@ function M.lootMoney(money, money_type)
   
   current.money = current.money + money
   
-  if notice.checkMoney(money) then
-    local zone_id = addZone(current.zones)
-    local time_diff = diffTime(currentTime(), current.start)
-    local type_id = money_types[money_type]
-    tinsert(current.money_loots, { zone_id, time_diff, money, type_id })
-  end
+  local zone_id = addZone(current.zones)
+  local time_diff = diffTime(currentTime(), current.start)
+  local type_id = money_types[money_type]
+  tinsert(current.money_loots, { zone_id, time_diff, money, type_id })
+  
+  notice.checkMoney(money)
 end
 
 do
@@ -117,6 +113,29 @@ do
       session.name = name
     end,
   }
+  
+  local confirm_delete_oldest_popup_name 
+    = A.name .. "_ConfirmDeleteOldest_Cmd"
+  StaticPopupDialogs[confirm_delete_oldest_popup_name] = {
+    text = L["Maximum sessions. Delete oldest session?"],
+    button1 = TEXT(YES),
+    button2 = TEXT(NO),
+    OnAccept = function()
+      startSession()
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+  }
+  
+  function M.startSessionConfirm()
+    local db = A.getCharConfig("fa.session")
+    if db.confirm_delete_oldest and hasMaxSessions() then
+      StaticPopup_Show(confirm_delete_oldest_popup_name)
+    else
+      startSession()
+    end
+  end
 
   function M.startSession()
     A.trace("Start session.")
@@ -129,9 +148,9 @@ do
     local db = A.getCharConfig("fa.session")
     local sessions = db.sessions
     
-    -- Full sessions table already
-    if getn(sessions) == db.max_sessions then
-      -- Remove earliest session
+    -- Check if at maximum sessions
+    if hasMaxSessions() then
+      -- Remove oldest session
       table.remove(sessions, 1)
     end
     
@@ -265,7 +284,7 @@ do
   end
   
   do
-    local warning_name = "FonzAppraiser_ReduceMaximumSessions"
+    local warning_name = A.name .. "_ReduceMaximumSessions"
     local target_num
     
     StaticPopupDialogs[warning_name] = {

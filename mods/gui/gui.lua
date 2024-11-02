@@ -4,7 +4,8 @@ A.module 'fa.gui'
 
 local util = A.requires(
   'util.string',
-  'util.money'
+  'util.money',
+  'util.chat'
 )
 
 local palette = A.require 'fa.palette'
@@ -23,7 +24,7 @@ local font_size = {
 }
 M.font_size = font_size
 
-local small_number_font = CreateFont("FonzAppraiser_NumberFontNormalSmall")
+local small_number_font = CreateFont(A.name .. "_NumberFontNormalSmall")
 M.small_number_font = small_number_font
 small_number_font:CopyFontObject(GameFontHighlightSmall)
 small_number_font:SetFont(font.fixed, font_size.medium)
@@ -246,11 +247,6 @@ do
     frame:SetHighlightTexture([[Interface\Buttons\UI-CheckBox-Highlight]], 
       "ADD")
     frame:SetCheckedTexture([[Interface\Buttons\UI-CheckBox-Check]])
-    --[[
-    --Unknown issues with checkboxes always appearing disabled
-    frame:SetDisabledCheckedTexture(
-      [[Interface\Buttons\UI-CheckBox-Check-Disabled]])
-    --]]
     
     do
       local fontstring = frame:CreateFontString()
@@ -349,8 +345,8 @@ do
   
   local function onClickItem(self)
     if not self.item_link then return end
-    if IsShiftKeyDown() and ChatFrameEditBox:IsVisible() then
-      ChatFrameEditBox:Insert(self.item_link)
+    if IsShiftKeyDown() then
+      util.chatlink(self.item_link)
     elseif IsControlKeyDown() then
       DressUpItemLink(self.item_link)
     end
@@ -460,13 +456,15 @@ do
     entry_checkbox:SetChecked(false)
     entry_checkbox.onClick = onClickCheckbox
     
-    local button = CreateFrame("Button", nil, entry)
+    local button = CreateFrame("Button", "$parentCurrentSessionButton", entry)
     entry.button = button
     button:SetPoint("TOPLEFT", entry_checkbox, "TOPRIGHT")
     button:SetPoint("BOTTOMRIGHT", entry, 0, 0)
     
-    --Entry parent has highlight texture so pull in front of button child
-    entry:SetFrameLevel(button:GetFrameLevel() + 1)
+    --Entry parent has highlight texture so put child behind parent
+    --Note. in TBC changing parent frame level affects children, so only 
+    --change child.
+    button:SetFrameLevel(entry:GetFrameLevel() - 1)
     --Checkbox must still remain clickable, so pull in front of parent
     entry_checkbox:SetFrameLevel(entry:GetFrameLevel() + 1)
     
@@ -500,7 +498,7 @@ do
       button:SetPoint("TOPLEFT", entry_checkbox, "TOPRIGHT")
       button:SetPoint("BOTTOMRIGHT", entry, 0, 0)
       
-      entry:SetFrameLevel(button:GetFrameLevel() + 1)
+      button:SetFrameLevel(entry:GetFrameLevel() - 1)
       entry_checkbox:SetFrameLevel(entry:GetFrameLevel() + 1)
       
       text = button:CreateFontString(nil, "ARTWORK")

@@ -2,7 +2,8 @@ local A = FonzAppraiser
 
 A.module 'util.string'
 
-local util_table = A.require 'util.table'
+local client = A.require 'util.client'
+local util = A.require 'util.table'
 
 function M.isempty(s)
   return s == nil or s == ''
@@ -20,7 +21,7 @@ do
   local find, sub, gsub, len = string.find, string.sub, string.gsub, string.len
   
   function M.strmatch(str, pattern, index)
-    local unpack = util_table.unpack
+    local unpack = util.unpack
     local t = { find(str, pattern, index, false) }
     if not t[1] then return nil end
     if t[3] then
@@ -32,6 +33,15 @@ do
   
   function M.strtrim(str)
     return (gsub(str, "^%s*(.-)%s*$", "%1"))
+  end
+  
+  function M.isSpaceOrEmpty(str)
+    local s = str and strtrim(str)
+    return s == nil or s == ''
+  end
+  
+  function M.isNotSpaceOrEmpty(str)
+    return not isSpaceOrEmpty(str)
   end
 
   -- splitByPlainSeparator
@@ -171,63 +181,89 @@ end
 
 -- Modified from:
 -- http://lua-users.org/wiki/TableSerialization
-do
-  function M.tablePrint(input, indent, done)
-    local format = string.format
-    local rep = string.rep
-    local concat = table.concat
-    
-    done = done or {}
-    indent = indent or 0
-    if type(input) == "table" then
-      local sb = {}
-      for key, value in pairs(input) do
-        tinsert(sb, rep (" ", indent))
-        if type(value) == "table" and not done[value] then
-          done[value] = true
-          local k = type(key) == "number" and format("[%g]", key)
-            or format('"%s"', key)
-          tinsert(sb, k .. " = {\n")
-          tinsert(sb, tablePrint(value, indent + 2, done))
-          tinsert(sb, rep (" ", indent) .. "}\n")
-        elseif type(key) == "number" then
-          tinsert(sb, format('[%g] = "%s"\n', key, tostring(value)))
-        elseif type(key) == "string" then
-          tinsert(sb, format('"%s" = "%s"\n', key, tostring(value)))
-        else
-          tinsert(sb, format("%s = %s\n", tostring(key), tostring(value)))
-        end
+function M.tablePrint(input, indent, done)
+  local format = string.format
+  local rep = string.rep
+  local concat = table.concat
+  
+  done = done or {}
+  indent = indent or 0
+  if type(input) == "table" then
+    local sb = {}
+    for key, value in pairs(input) do
+      tinsert(sb, rep (" ", indent))
+      if type(value) == "table" and not done[value] then
+        done[value] = true
+        local k = type(key) == "number" and format("[%g]", key)
+          or format('"%s"', key)
+        tinsert(sb, k .. " = {\n")
+        tinsert(sb, tablePrint(value, indent + 2, done))
+        tinsert(sb, rep (" ", indent) .. "}\n")
+      elseif type(key) == "number" then
+        tinsert(sb, format('[%g] = "%s"\n', key, tostring(value)))
+      elseif type(key) == "string" then
+        tinsert(sb, format('"%s" = "%s"\n', key, tostring(value)))
+      else
+        tinsert(sb, format("%s = %s\n", tostring(key), tostring(value)))
       end
-      return concat(sb)
-    else
-      return tostring(input)
     end
-  end
-
-  function M.tostringall(...)
-    return tablePrint(arg)
+    return concat(sb)
+  else
+    return tostring(input)
   end
 end
 
 do
-  local mod = math.mod
-  local lshift = bit.lshift
-  local sbyte, slen = string.byte, string.len
-
-  -- Ported from:
-  -- https://github.com/philanc/plc/blob/master/plc/checksum.lua
-  function M.adler32(s)
-    local length = slen(s)
-    local prime = 65521
-    local s1, s2 = 1, 0
+  local getn = table.getn
+  local tconcat = table.concat
+  local tinsert = table.insert
+  
+  function M.strniljoin(delim, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, 
+      arg9, arg10)
+    if not delim then return end
     
-    for i = 1,length do
-      local b = sbyte(s, i)
-      s1 = s1 + b
-      s2 = s2 + s1
+    local t, stop = {}, nil
+    stop = stop or arg10 and 10
+    if stop then tinsert(t, tostring(arg10 or "")) end
+    stop = stop or arg9 and 9
+    if stop then tinsert(t, tostring(arg9 or "")) end
+    stop = stop or arg8 and 8
+    if stop then tinsert(t, tostring(arg8 or "")) end
+    stop = stop or arg7 and 7
+    if stop then tinsert(t, tostring(arg7 or "")) end
+    stop = stop or arg6 and 6
+    if stop then tinsert(t, tostring(arg6 or "")) end
+    stop = stop or arg5 and 5
+    if stop then tinsert(t, tostring(arg5 or "")) end
+    stop = stop or arg4 and 4
+    if stop then tinsert(t, tostring(arg4 or "")) end
+    stop = stop or arg3 and 3
+    if stop then tinsert(t, tostring(arg3 or "")) end
+    stop = stop or arg2 and 2
+    if stop then tinsert(t, tostring(arg2 or "")) end
+    stop = stop or arg1 and 1
+    if not stop then return "" end
+    
+    if stop > 1 or type(arg1) ~= "table" then
+      tinsert(t, tostring(arg1 or ""))
+    else
+      -- If second argument is the only argument and it is a table, then
+      -- concatenate that table instead.
+      local s = {}
+      for i = 1, getn(arg1) do
+        tinsert(s, tostring(arg1[i] or ""))
+      end
+      
+      return tconcat(s, delim)
     end
-    s1 = mod(s1, prime)
-    s2 = mod(s2, prime)
-    return lshift(s2, 16) + s1
+    
+    local s = {}
+    for i = getn(t), 1, -1 do
+      tinsert(s, t[i])
+    end
+    
+    return tconcat(s, delim)
   end
 end
+
+

@@ -4,9 +4,11 @@ A.module 'util.bag'
 
 local util = A.require 'util.item'
 
-function mprint(...)
-  DEFAULT_CHAT_FRAME:AddMessage(table.concat(arg, " "))
-end
+local DeleteCursorItem = DeleteCursorItem
+local GetContainerItemInfo = GetContainerItemInfo
+local GetContainerItemLink = GetContainerItemLink
+local GetContainerNumSlots = GetContainerNumSlots
+local PickupContainerItem = PickupContainerItem
 
 function isempty(s)
   return s == nil or s == ''
@@ -40,8 +42,29 @@ do
     return status
   end
   
+  local makeItemCode = util.makeItemCode
+  local parseItemLink = util.parseItemLink
   local safeItemLink = util.safeItemLink
-  local parseItemCode = util.parseItemCode
+  
+  function M.hasSoulboundItemCode(search_code)
+    if not search_code then return end
+    
+    search_code = makeItemCode(search_code) or search_code
+    
+    for b = 0,4 do
+      for s = 1,GetContainerNumSlots(b) do
+        local link = GetContainerItemLink(b, s)
+        if not isempty(link) then
+          local _, _, _, code = parseItemLink(link)
+          if code == search_code then
+            return isSoulbound(b, s)
+          end
+        end
+      end
+    end
+    
+    return false
+  end
   
   function M.hasSoulboundItem(search_item)
     if not search_item then return end
@@ -49,13 +72,13 @@ do
     local search_item_link = safeItemLink(search_item)
     if not search_item_link then return end
     
-    local search_key = format("%d:%d:%d", parseItemCode(search_item_link))
+    local _, _, _, search_code = parseItemLink(search_item_link)
     for b = 0,4 do
       for s = 1,GetContainerNumSlots(b) do
         local link = GetContainerItemLink(b, s)
         if not isempty(link) then
-          local key = format("%d:%d:%d", parseItemCode(link))
-          if key == search_key then
+          local _, _, _, code = parseItemLink(link)
+          if code == search_code then
             return isSoulbound(b, s)
           end
         end
@@ -97,23 +120,20 @@ function M.findBagItem(item)
 	return bag, slot, texture, totalcount
 end
 
-function M.useBagItem(item, show)
+function M.useBagItem(item)
   if isempty(item) then return end
   
 	for b = 0,4 do
 		for s = 1,GetContainerNumSlots(b) do
 			local link = GetContainerItemLink(b, s)
-			if not isempty(link) then
-				if string.find(link, item) then
-          UseContainerItem(b, s)
-          if show then
-            mprint("Item '" .. itemLinkToName(link) .. "' used.")
-          end
-          return true
-				end
+			if not isempty(link) and string.find(link, item) then
+        UseContainerItem(b, s)
+        return true
 			end
 		end
 	end
+  
+  return false
 end
 
 function M.deleteBagItem(bag, slot)
@@ -121,9 +141,8 @@ function M.deleteBagItem(bag, slot)
   DeleteCursorItem()
 end
 
-function M.deleteNamedBagItem(item, bag, slot, show)
+function M.deleteNamedBagItem(item, bag, slot)
 	if isempty(item) or bag == nil or slot == nil then return end
-  if show == nil then show = true end
   
 	local expected_item = string.lower(itemLinkToName(item))  
   if isempty(expected_item) then return end
@@ -133,11 +152,11 @@ function M.deleteNamedBagItem(item, bag, slot, show)
   
   local bag_item = string.lower(itemLinkToName(link))
   if bag_item == expected_item then
-    if show then
-      mprint("Deleting bag item: "..bag_item)
-    end
     deleteBagItem(bag, slot)
+    return true
   end
+  
+  return false
 end
 
 function M.deleteItem(item)
