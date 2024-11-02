@@ -1,6 +1,10 @@
 local A = FonzAppraiser
 
-A.HELP_VERSION = [[Version 3.0.0 - 2024-11-02 |cffffffff
+A.HELP_VERSION = [[Version 3.1.0 - 2024-11-02 |cffffffff
+[+] Auctioneer Advanced Suite ("Auc-Advanced" addon) added into the Auctioneer 
+pricing system.
+
+|rVersion 3.0.0 - 2024-11-02 |cffffffff
 [+] Ported to the WotLK 3.3.5a client.
 [+] Auctionator pricing system for the WotLK 3.3.5a client added.
 [+] TradeSkillMaster (TSM) pricing system for the WotLK 3.3.5a client added.

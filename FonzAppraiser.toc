@@ -2,7 +2,7 @@
 ## Title: FonzAppraiser
 ## Notes: Tracks the value of personal loot. Command: /fa.
 ## Author: fondlez
-## Version: 3.0.0
+## Version: 3.1.0
 ## OptionalDeps: aux-addon, Auctioneer, Auctionator, TradeSkillMaster
 ## X-Website: http://github.com/fondlez
 ## X-Category: Inventory
