@@ -1,6 +1,10 @@
 local A = FonzAppraiser
 
-A.HELP_VERSION = [[Version 3.1.0 - 2024-11-02 |cffffffff
+A.HELP_VERSION = [[Version 3.1.1 - 2024-11-16 |cffffffff
+[*] Updated the detection method for money from personal loot.
+[*] Workaround for bug on some servers where group loot messages duplicate items.
+
+|rVersion 3.1.0 - 2024-11-02 |cffffffff
 [+] Auctioneer Advanced Suite ("Auc-Advanced" addon) added into the Auctioneer 
 pricing system.
 

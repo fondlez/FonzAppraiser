@@ -64,6 +64,8 @@ do
 end
 
 do
+  local GetTime = GetTime
+  
   local find = string.find
   local makeStoreToken = util.makeStoreToken
   local parseItemLink = util.parseItemLink
@@ -78,20 +80,53 @@ do
   -- e.g. "You won: [Heavy Leather]"
   local PATTERN_ITEM_LOOT_WON = "^You won: (.+)"
   
+  local LOOT_TYPE_SELF = 0
+  local LOOT_TYPE_WON = 1
+  
+  local loot_type
+  local last_loot_time, last_won_code, last_self_code
+  
+  local function seenTooSoon(loot_time)
+    return (GetTime() - loot_time) < 1
+  end
+  
   function A:CHAT_MSG_LOOT(msg)
     local loot_string
     _, _, loot_string = find(msg, PATTERN_ITEM_LOOT_SELF)
-    if not loot_string then 
+    if loot_string then 
+      loot_type = LOOT_TYPE_SELF
+    else
       _, _, loot_string = find(msg, PATTERN_ITEM_LOOT_WON)
       if not loot_string then return end
+      loot_type = LOOT_TYPE_WON
     end
     
     local item_link, _, id, code = parseItemLink(loot_string)
-    local _, _, count = find(loot_string, PATTERN_ITEM_LOOT_SELF_COUNT)
-    count = count and tonumber(count) or 1
+    if code then
+      -- Check for immediate duplicate item loot messages across loot types
+      if last_loot_time then
+        if loot_type == LOOT_TYPE_SELF then
+          last_self_code = code
+          if last_won_code and code == last_won_code 
+              and seenTooSoon(last_loot_time) then 
+            last_loot_time = nil -- Found the Self duplicate message, so reset
+            return
+          end
+        elseif loot_type == LOOT_TYPE_WON then
+          last_won_code = code
+          if last_self_code and code == last_self_code 
+              and seenTooSoon(last_loot_time) then 
+            last_loot_time = nil -- Found the Won duplicate message, so reset
+            return
+          end
+        end
+      end
+      
+      last_loot_time = GetTime()
     
-    if code then      
       local token = makeStoreToken(code)
+      local _, _, count = find(loot_string, PATTERN_ITEM_LOOT_SELF_COUNT)
+      count = count and tonumber(count) or 1
       
       if A:isEnabled() and filter.itemMatchQuality(id) then
         local value = pricing.value(token)
