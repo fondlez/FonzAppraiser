@@ -114,7 +114,8 @@ do
 end
 
 do
-  local find = string.find
+  local LootSlotIsCoin = LootSlotIsCoin
+  
   local isInGroup = util.isInGroup
   local extendedStringToMoney = util.extendedStringToMoney
   
@@ -129,8 +130,7 @@ do
     
     for slot=1,count do
       local _, name, quantity = GetLootSlotInfo(slot)
-      if quantity and quantity == 0 then
-        --Slot with quantity 0 should be coin info
+      if LootSlotIsCoin(slot) then
         local value = extendedStringToMoney(name)
         if value and value > 0 then
           money_loot_slot = slot
