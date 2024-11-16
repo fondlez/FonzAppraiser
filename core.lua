@@ -109,14 +109,12 @@ do
           last_self_code = code
           if last_won_code and code == last_won_code 
               and seenTooSoon(last_loot_time) then 
-            last_loot_time = nil -- Found the Self duplicate message, so reset
             return
           end
         elseif loot_type == LOOT_TYPE_WON then
           last_won_code = code
           if last_self_code and code == last_self_code 
               and seenTooSoon(last_loot_time) then 
-            last_loot_time = nil -- Found the Won duplicate message, so reset
             return
           end
         end

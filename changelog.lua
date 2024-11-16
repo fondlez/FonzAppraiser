@@ -1,6 +1,9 @@
 local A = FonzAppraiser
 
-A.HELP_VERSION = [[Version 3.1.1 - 2024-11-16 |cffffffff
+A.HELP_VERSION = [[Version 3.1.2 - 2024-11-16 |cffffffff
+[*] Improved workaround for duplicate group loot item message server bug.
+
+|rVersion 3.1.1 - 2024-11-16 |cffffffff
 [*] Updated the detection method for money from personal loot.
 [*] Workaround for bug on some servers where group loot messages duplicate items.
 

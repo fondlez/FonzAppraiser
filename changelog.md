@@ -5,13 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2024-11-16
+
+### Fixed
+
+- Improved workaround for duplicate group loot item message server bug.
+
 ## [3.1.1] - 2024-11-16
 
 ### Changed
 
 - Updated the detection method for money from personal loot.
 
-## Fixed
+### Fixed
 
 - Workaround for bug on some servers where group loot messages duplicate items.
 
