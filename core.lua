@@ -105,22 +105,24 @@ do
     if code then
       -- Check for immediate duplicate item loot messages across loot types
       if last_loot_time then
-        if loot_type == LOOT_TYPE_SELF then
-          last_self_code = code
-          if last_won_code and code == last_won_code 
-              and seenTooSoon(last_loot_time) then 
-            return
-          end
-        elseif loot_type == LOOT_TYPE_WON then
-          last_won_code = code
-          if last_self_code and code == last_self_code 
-              and seenTooSoon(last_loot_time) then 
-            return
-          end
+        if loot_type == LOOT_TYPE_SELF 
+            and last_won_code and code == last_won_code 
+            and seenTooSoon(last_loot_time) then 
+          return
+        elseif loot_type == LOOT_TYPE_WON
+            and last_self_code and code == last_self_code
+            and seenTooSoon(last_loot_time) then 
+          return
         end
       end
       
+      -- Record last sucessful loot
       last_loot_time = GetTime()
+      if loot_type == LOOT_TYPE_SELF then
+        last_self_code = code
+      elseif loot_type == LOOT_TYPE_WON then
+        last_won_code = code
+      end
     
       local token = makeStoreToken(code)
       local _, _, count = find(loot_string, PATTERN_ITEM_LOOT_SELF_COUNT)
