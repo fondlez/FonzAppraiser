@@ -14,9 +14,6 @@ local util = A.requires(
 
 local session = A.require 'fa.session'
 local misc = A.require 'fa.misc'
-
-local CREATURE_LEVEL_MAX = client.is_vanilla and 63 or client.is_tbc and 73 
-  or 83
   
 --[[
   ITEM_QUALITY0_DESC = "Poor";
@@ -128,15 +125,15 @@ local filter_check = {
   end,
   ["level"]=function(arg)
     arg = tonumber(arg)
-    return arg and arg >=0 and arg <= CREATURE_LEVEL_MAX and arg
+    return arg and arg > 0 and arg
   end, 
   ["lmin"]=function(arg)
     arg = tonumber(arg)
-    return arg and arg >=0 and arg <= CREATURE_LEVEL_MAX and arg
+    return arg and arg > 0 and arg
   end, 
   ["lmax"]=function(arg)
     arg = tonumber(arg)
-    return arg and arg >=0 and arg <= CREATURE_LEVEL_MAX and arg
+    return arg and arg > 0 and arg
   end,
   ["type"]=function(arg)
     return ITEM_TYPE[arg] and arg

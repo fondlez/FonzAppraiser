@@ -2,15 +2,15 @@ local A = FonzAppraiser
 
 A.module 'util.client'
 
-local GetBuildInfo = _G.GetBuildInfo
+do -- VERSION
+  local GetBuildInfo = _G.GetBuildInfo
 
-function M.getClient()
-  local display_version, build_number, build_date, ui_version = GetBuildInfo()
-  ui_version = ui_version or 11200
-  return ui_version, display_version, build_number, build_date
-end
-
-do 
+  function M.getClient()
+    local display_version, build_number, build_date, ui_version = GetBuildInfo()
+    ui_version = ui_version or 11200
+    return ui_version, display_version, build_number, build_date
+  end
+  
   local ui_version = getClient()
   M.ui_version = ui_version
   
@@ -47,5 +47,29 @@ do
   -- chance to run
   if is_wotlk or is_unknown then
     M.is_wotlk_or_more = true
+  end
+end
+
+do -- CONTENT
+  local GetAccountExpansionLevel = _G.GetAccountExpansionLevel
+  local MAX_PLAYER_LEVEL_TABLE  = _G.MAX_PLAYER_LEVEL_TABLE
+  
+  local expansion = GetAccountExpansionLevel()
+  local content = {}
+  M.content = content
+
+  content.VANILLA = 0
+  content.TBC = 1
+  content.WOTLK = 2
+  content.expansion = expansion
+  content.maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[expansion]
+  
+  content.has_vanilla = true
+  if content.expansion >= content.TBC then
+    content.has_tbc = true
+  end
+  
+  if content.expansion >= content.WOTLK then
+    content.has_wotlk = true
   end
 end

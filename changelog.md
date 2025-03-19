@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2025-03-19
+
+### Changed
+
+- Added a minimum quality threshold for market value pricing. Set to: Common or
+higher. Items of Poor quality will be forced to vendor value. Github Issue #7. 
+
 ## [3.1.3] - 2024-11-16
 
 ### Fixed

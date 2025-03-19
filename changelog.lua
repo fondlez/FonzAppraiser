@@ -1,6 +1,11 @@
 local A = FonzAppraiser
 
-A.HELP_VERSION = [[Version 3.1.3 - 2024-11-16 |cffffffff
+A.HELP_VERSION = [[Version 3.2.0 - 2025-03-19 |cffffffff
+[*] Added a minimum quality threshold for market value pricing. Set to: Common 
+or higher. Items of Poor quality will be forced to vendor value. Github Issue 
+#7.
+
+|rVersion 3.1.3 - 2024-11-16 |cffffffff
 [*] Correction for initial item of duplicate group loot item message server bug.
 
 |rVersion 3.1.2 - 2024-11-16 |cffffffff
