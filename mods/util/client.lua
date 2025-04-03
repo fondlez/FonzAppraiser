@@ -54,7 +54,7 @@ do -- CONTENT
   local GetAccountExpansionLevel = _G.GetAccountExpansionLevel
   local MAX_PLAYER_LEVEL_TABLE  = _G.MAX_PLAYER_LEVEL_TABLE
   
-  local expansion = GetAccountExpansionLevel()
+  local expansion = GetAccountExpansionLevel and GetAccountExpansionLevel() or 0
   local content = {}
   M.content = content
 
@@ -62,7 +62,8 @@ do -- CONTENT
   content.TBC = 1
   content.WOTLK = 2
   content.expansion = expansion
-  content.maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[expansion]
+  content.maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE and 
+    MAX_PLAYER_LEVEL_TABLE[expansion] or 60
   
   content.has_vanilla = true
   if content.expansion >= content.TBC then
