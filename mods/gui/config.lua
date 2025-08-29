@@ -112,9 +112,9 @@ do
   tab2.onSelect = hideUnselected
   
   -- Note. Check that all tab child frames, except tab1's, start with :Hide()
-  frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+  frame:RegisterEvent("PLAYER_LOGIN")
   frame:SetScript("OnEvent", function()
-    if event == "PLAYER_ENTERING_WORLD" then
+    if event == "PLAYER_LOGIN" then
       PanelTemplates_SetNumTabs(frame, 2)
       PanelTemplates_SetTab(frame, selected_tab_id)
     end

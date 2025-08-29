@@ -119,9 +119,9 @@ do
   tab3:SetPoint("LEFT", tab2, "RIGHT", 5, 0)
   tab3.onSelect = hideUnselected
   
-  inner_frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+  inner_frame:RegisterEvent("PLAYER_LOGIN")
   inner_frame:SetScript("OnEvent", function()
-    if event == "PLAYER_ENTERING_WORLD" then
+    if event == "PLAYER_LOGIN" then
       PanelTemplates_SetNumTabs(inner_frame, 3)
       PanelTemplates_SetTab(inner_frame, selected_tab_id)
     end
