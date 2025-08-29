@@ -14,6 +14,35 @@ do -- VERSION
   local ui_version = getClient()
   M.ui_version = ui_version
   
+  local compat = {}
+  M.compat = compat
+  
+  compat.VANILLA = 0
+  compat.TBC = 1
+  compat.WOTLK = 2
+  compat.CATA = 3
+  compat.MOP = 4
+  compat.is_unknown = false
+  
+  function M.getCompatibility()
+    if not ui_version or ui_version <= 11200 then 
+      return compat.VANILLA
+    elseif ui_version >= 20000 and ui_version <= 20400 then 
+      return compat.TBC
+    elseif ui_version >= 30000 and ui_version <= 30300 then
+      return compat.WOTLK
+    elseif ui_version >= 40000 and ui_version <= 40300 then
+      return compat.CATA
+    elseif ui_version >= 50000 and ui_version <= 50400 then
+      return compat.MOP
+    else
+      compat.is_unknown = true
+      return compat.MOP
+    end
+  end
+  
+  compat.version = getCompatibility()
+ 
   if not ui_version or ui_version <= 11200 then
     M.is_vanilla = true
   else
