@@ -104,8 +104,7 @@ if content.expansion > content.VANILLA then
   defaults.money_threshold = 90000
   defaults.item_threshold = 90000
   -- Use a different sound than current in-game combat sounds as defaults.
-  defaults.item_notify["sound"] = A.addon_path 
-    .. A.addon_path .. [[\sound\chaching.mp3]]
+  defaults.item_notify["sound"] = A.addon_path .. [[\sound\chaching.mp3]]
 end
 M.defaults = defaults
 A.registerCharConfigDefaults("fa.notice", defaults)
