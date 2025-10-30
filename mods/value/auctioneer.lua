@@ -26,6 +26,7 @@ local GetAuctionPrices
 --]]
 
 local old_api, advanced_api = false, false
+local compat = client.compatibility
 
 do
   local addon_warning_already = false
@@ -47,7 +48,7 @@ do
     return true
   end
   
-  if client.is_tbc_or_more then
+  if compat.version > compat.VANILLA then
     function getRefs()
       if not addonExists() then return end
       
@@ -123,7 +124,7 @@ function codeToKey(code)
   return item_key
 end
 
-if client.is_tbc_or_more then
+if compat.version > compat.VANILLA then
   function M.minPrice(code)
     if not GetMarketValue or not (auction_key and GetSuggestedResale) then
       if not getRefs() then return end
@@ -178,7 +179,7 @@ else
   end  
 end
   
-if client.is_tbc_or_more then
+if compat.version > compat.VANILLA then
   function M.buyout(code)
     if not GetMarketValue 
         or not (auction_key and GetItemHistoricalMedianBuyout) then

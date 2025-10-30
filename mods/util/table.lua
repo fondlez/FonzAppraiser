@@ -3,6 +3,7 @@ local A = FonzAppraiser
 A.module 'util.table'
 
 local client = A.require 'util.client'
+local compat = client.compatibility
 
 function wipe(t)
   local mt = getmetatable(t) or {}
@@ -16,11 +17,11 @@ function wipe(t)
   return t
 end
 
-if client.is_wotlk_or_more then
+if compat.version > compat.TBC then
   M.wipe = _G.wipe
   M.unpack = _G.unpack
   M.select = _G.select
-elseif client.is_tbc then
+elseif compat.version == compat.TBC then
   M.wipe = wipe
   M.unpack = _G.unpack
   M.select = _G.select

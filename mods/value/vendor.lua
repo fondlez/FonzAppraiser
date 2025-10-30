@@ -10,11 +10,12 @@ local util = A.require 'util.item'
 
 local pricing = A.require 'fa.value.pricing'
 
+local compat = client.compatibility
 do
   local parseItemCode = util.parseItemCode
   local getItemVendorPrice = util.getItemVendorPrice
   
-  if client.is_wotlk_or_more then
+  if compat.version >= compat.WOTLK then
     function M.value(code)
       local price = getItemVendorPrice(code)
       if not price then

@@ -3,8 +3,9 @@ local A = FonzAppraiser
 A.module 'util.compat'
 
 local client = A.require 'util.client'
+local compat = client.compatibility
 
-if client.is_tbc_or_less then
+if compat.version < compat.WOTLK then
   -- FrameXML\UIPanelTemplates.lua
   ---[[
   function M.FauxScrollFrame_OnVerticalScroll(self, value, itemHeight, 

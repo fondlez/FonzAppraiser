@@ -1,6 +1,7 @@
 local A = FonzAppraiser
 local client = A.require 'util.client'
-if not client.is_tbc then return end
+local compat = client.compatibility
+if compat.version ~= compat.TBC then return end
 
 A.module 'util.item'
 

@@ -25,6 +25,7 @@ do
   end
 end
 
+local compat = client.compatibility
 do
   local parseItemCode = util.parseItemCode
   local makeItemLink = util.makeItemLink
@@ -42,7 +43,7 @@ do
     level, item_type, item_subtype,
     stack, item_invtype, texture, ilevel = makeItemLink(item_string)
     
-    if client.is_tbc then
+    if compat.version == compat.TBC then
       return item_invtype, rarity, ilevel
     else
       return item_invtype, rarity, level

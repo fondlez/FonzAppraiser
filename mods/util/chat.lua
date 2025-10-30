@@ -11,7 +11,8 @@ function isempty(s)
   return s == nil or s == ''
 end
 
-if client.is_tbc_or_less then
+local compat = client.compatibility
+if compat.version < compat.WOTLK then
   function M.chatlink(item_link)
     if ChatFrameEditBox and ChatFrameEditBox:IsVisible() then
       ChatFrameEditBox:Insert(item_link)

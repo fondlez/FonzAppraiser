@@ -2,8 +2,9 @@ local A = FonzAppraiser
 local L = A.locale
 
 local client = A.require 'util.client'
+local compat = client.compatibility
 -- TSM addon only exists for wotlk or later
-if not client.is_wotlk_or_more then return end
+if compat.version < compat.WOTLK then return end
 
 A.module 'fa.value.tsm'
 

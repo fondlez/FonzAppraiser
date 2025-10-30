@@ -2,9 +2,10 @@ local A = FonzAppraiser
 local L = A.locale
 
 local client = A.require 'util.client'
+local compat = client.compatibility
 -- Little point adding an Auctionator option at this time for vanilla
 -- since there is no powerful or widely-used version of the addon.
-if not client.is_tbc_or_more then return end
+if compat.version == compat.VANILLA then return end
 
 A.module 'fa.value.auctionator'
 

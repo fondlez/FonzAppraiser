@@ -98,7 +98,8 @@ local defaults = {
   },
   ignore_soulbound = true,
 }
-if client.is_tbc_or_more then
+local content = client.content
+if content.expansion > content.VANILLA then
   -- Expansion inflation make different thresholds more appropriate
   defaults.money_threshold = 90000
   defaults.item_threshold = 90000

@@ -42,7 +42,8 @@ local ITEM_RARITY = {
   [5] = ITEM_QUALITY5_DESC,
   [6] = ITEM_QUALITY6_DESC,
 }
-if client.is_wotlk then
+local content = client.content
+if content.expansion >= content.WOTLK then
   ITEM_RARITY[ITEM_QUALITY7_DESC] = 7
   ITEM_RARITY[7] = ITEM_QUALITY7_DESC
 end
@@ -75,14 +76,14 @@ local ITEM_INVTYPE = {
   [_G["INVTYPE_WEAPONOFFHAND"]] = true,
   [_G["INVTYPE_WRIST"]] = true,
 }
-if client.is_tbc_or_more then
+if content.expansion >= content.TBC then
   ITEM_INVTYPE[_G["INVTYPE_AMMO"]] = true
   ITEM_INVTYPE[_G["INVTYPE_QUIVER"]] = true
   ITEM_INVTYPE[_G["INVTYPE_RANGEDRIGHT"]] = true
   ITEM_INVTYPE[_G["INVTYPE_RELIC"]] = true
   ITEM_INVTYPE[_G["INVTYPE_THROWN"]] = true
 end
-if client.is_wotlk_or_more then
+if content.expansion >= content.WOTLK then
   ITEM_INVTYPE[_G["INVTYPE_WEAPONMAINHAND_PET"]] = true
 end
 

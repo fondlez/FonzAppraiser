@@ -332,10 +332,11 @@ local groups_wotlk = {
   },
 }
 
+local content = client.content
 do
   local groups = groups_vanilla
   
-  if client.is_tbc_or_more then
+  if content.expansion >= content.TBC then
     for k in pairs(groups_tbc) do
       local group = groups[k]
       for l in pairs(groups_tbc[k]) do
@@ -344,7 +345,7 @@ do
     end
   end
   
-  if client.is_wotlk_or_more then
+  if content.expansion >= content.WOTLK then
     for k in pairs(groups_wotlk) do
       local group = groups[k]
       for l in pairs(groups_wotlk[k]) do
