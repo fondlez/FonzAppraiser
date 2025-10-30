@@ -287,17 +287,17 @@ do
   end
 end
 
+local function enableHighlight(button)
+  local texture = button:CreateTexture()
+  texture:SetAllPoints(button)
+  texture:SetTexture([[Interface\Buttons\UI-Listbox-Highlight]])
+  texture:SetAlpha(.2)
+  button:SetHighlightTexture(texture)
+end
+
 do
   local function name(frame, id)
     return "$parentEntry".. tostring(id)
-  end
-  
-  local function enableHighlight(button)
-    local texture = button:CreateTexture()
-    texture:SetAllPoints(button)
-    texture:SetTexture([[Interface\Buttons\UI-Listbox-Highlight]])
-    texture:SetAlpha(.2)
-    button:SetHighlightTexture(texture)
   end
 
   function M.scrollEntry(parent, scroll_frame_index, first, x, y, z)
@@ -436,6 +436,15 @@ do
     end
   end
   
+  local function delegateHandlers(downstream, upstream, handlers)
+    for i,v in ipairs(handlers) do
+      downstream:SetScript(v, function(downstream)
+        local handler = upstream:GetScript(v)
+        if handler then handler(upstream) end
+      end)
+    end
+  end
+  
   function M.makeCheckButtonRows(self, scroll_frame_index, x, y, z, justify,
       onClickEntry, onClickCheckbox, onEnterEntry, onLeaveEntry)
     local parent = self:GetParent()
@@ -455,18 +464,22 @@ do
     entry_checkbox:SetPoint("LEFT", entry)
     entry_checkbox:SetChecked(false)
     entry_checkbox.onClick = onClickCheckbox
+    --Checkbox must still remain clickable, so pull in front of parent
+    entry_checkbox:SetFrameLevel(entry:GetFrameLevel() + 1)
     
     local button = CreateFrame("Button", "$parentCurrentSessionButton", entry)
     entry.button = button
     button:SetPoint("TOPLEFT", entry_checkbox, "TOPRIGHT")
     button:SetPoint("BOTTOMRIGHT", entry, 0, 0)
-    
-    --Entry parent has highlight texture so put child behind parent
-    --Note. in TBC changing parent frame level affects children, so only 
-    --change child.
-    button:SetFrameLevel(entry:GetFrameLevel() - 1)
-    --Checkbox must still remain clickable, so pull in front of parent
-    entry_checkbox:SetFrameLevel(entry:GetFrameLevel() + 1)
+    enableHighlight(button)
+    button:SetScript("OnClick", function(self)
+      local self = self or this
+      local entry = self:GetParent()
+      local handler = entry:GetScript("OnClick")
+      A.debug("handler: %s", tostring(handler))
+      if handler then entry:Click() end
+    end)
+    delegateHandlers(button, entry, {"OnEnter", "OnLeave"})
     
     local text = button:CreateFontString(nil, "ARTWORK")
     button.text = text
@@ -492,14 +505,20 @@ do
       entry_checkbox:SetPoint("LEFT", entry)
       entry_checkbox:SetChecked(false)
       entry_checkbox.onClick = onClickCheckbox
+      entry_checkbox:SetFrameLevel(entry:GetFrameLevel() + 1)
       
       button = CreateFrame("Button", nil, entry)
       entry.button = button
       button:SetPoint("TOPLEFT", entry_checkbox, "TOPRIGHT")
-      button:SetPoint("BOTTOMRIGHT", entry, 0, 0)
-      
-      button:SetFrameLevel(entry:GetFrameLevel() - 1)
-      entry_checkbox:SetFrameLevel(entry:GetFrameLevel() + 1)
+      button:SetPoint("BOTTOMRIGHT", entry, 0, 0)      
+      enableHighlight(button)
+      button:SetScript("OnClick", function(self)
+        local self = self or this
+        local entry = self:GetParent()
+        local handler = entry:GetScript("OnClick")
+        if handler then entry:Click() end
+      end)
+      delegateHandlers(button, entry, {"OnEnter", "OnLeave"})
       
       text = button:CreateFontString(nil, "ARTWORK")
       button.text = text

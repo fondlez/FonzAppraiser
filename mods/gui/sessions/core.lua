@@ -531,12 +531,13 @@ do
 end
 
 do
-  function updateSession_OnEnter()
-    sessions.highlight_session = this.session
+  function updateSession_OnEnter(self)
+    local self = self or this
+    sessions.highlight_session = self.session
     update()
   end
   
-  function clearSession_OnLeave()
+  function clearSession_OnLeave(self)
     sessions.highlight_session = nil
     update()
   end
