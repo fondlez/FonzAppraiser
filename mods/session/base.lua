@@ -382,17 +382,18 @@ do
       if not current or not session or current ~= session then return end
       if not money_loot_time and not item_loot_time then return end
       
+      local looted_in_past_hour = false
       if money_loot_time and 
-          diffTime(currentTime(), money_loot_time) > PERIOD then
-        return false
+          diffTime(currentTime(), money_loot_time) <= PERIOD then
+        looted_in_past_hour = true
       end
       
       if item_loot_time and
-          diffTime(currentTime(), item_loot_time) > PERIOD then
-        return false
+          diffTime(currentTime(), item_loot_time) <= PERIOD then
+        looted_in_past_hour = true
       end
       
-      return true
+      return looted_in_past_hour
     end
     
     function M.getCurrentPerHourValue()

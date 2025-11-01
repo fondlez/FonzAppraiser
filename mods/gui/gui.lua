@@ -436,15 +436,6 @@ do
     end
   end
   
-  local function delegateHandlers(downstream, upstream, handlers)
-    for i,v in ipairs(handlers) do
-      downstream:SetScript(v, function(downstream)
-        local handler = upstream:GetScript(v)
-        if handler then handler(upstream) end
-      end)
-    end
-  end
-  
   function M.makeCheckButtonRows(self, scroll_frame_index, x, y, z, justify,
       onClickEntry, onClickCheckbox, onEnterEntry, onLeaveEntry)
     local parent = self:GetParent()
@@ -452,12 +443,6 @@ do
     
     local entry = scrollEntry(parent, scroll_frame_index, true, x, y, z)
     entry.onClick = onClickEntry
-    if onEnterEntry then
-      entry:SetScript("OnEnter", onEnterEntry)
-    end
-    if onLeaveEntry then
-      entry:SetScript("OnLeave", onLeaveEntry)
-    end
     
     local entry_checkbox = checkbox(entry, nil)
     entry.checkbox = entry_checkbox
@@ -476,10 +461,14 @@ do
       local self = self or this
       local entry = self:GetParent()
       local handler = entry:GetScript("OnClick")
-      A.debug("handler: %s", tostring(handler))
       if handler then entry:Click() end
     end)
-    delegateHandlers(button, entry, {"OnEnter", "OnLeave"})
+    if onEnterEntry then
+      button:SetScript("OnEnter", onEnterEntry)
+    end
+    if onLeaveEntry then
+      button:SetScript("OnLeave", onLeaveEntry)
+    end
     
     local text = button:CreateFontString(nil, "ARTWORK")
     button.text = text
@@ -518,7 +507,12 @@ do
         local handler = entry:GetScript("OnClick")
         if handler then entry:Click() end
       end)
-      delegateHandlers(button, entry, {"OnEnter", "OnLeave"})
+      if onEnterEntry then
+        button:SetScript("OnEnter", onEnterEntry)
+      end
+      if onLeaveEntry then
+        button:SetScript("OnLeave", onLeaveEntry)
+      end
       
       text = button:CreateFontString(nil, "ARTWORK")
       button.text = text

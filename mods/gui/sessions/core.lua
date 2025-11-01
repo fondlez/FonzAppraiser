@@ -81,8 +81,11 @@ do
   local value, current, money_loot_time, item_loot_time
   
   function updateGphValue()
+    --TODO(@fondlez): should not show for sessions that is not current
+    --[[
     value, current, money_loot_time, item_loot_time = getCurrentPerHourValue()
     gph_value:updateDisplay(value)
+    --]]
   end
   
   function lazyUpdateGphValue()
@@ -533,7 +536,8 @@ end
 do
   function updateSession_OnEnter(self)
     local self = self or this
-    sessions.highlight_session = self.session
+    local entry = self:GetParent()
+    sessions.highlight_session = entry.session
     update()
   end
   
