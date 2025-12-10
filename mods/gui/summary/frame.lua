@@ -261,11 +261,28 @@ do
     target_label:SetPoint("TOPLEFT", start_button, "BOTTOMLEFT", 2, -6)
     target_label:SetText(L["Target:"])
     
+    local button = CreateFrame("Button", "$parentTargetValueButton", text_frame)
+    button:SetWidth(250)
+    button:SetHeight(12)
+    button:SetPoint("TOPRIGHT", stop_button, "BOTTOMRIGHT", -2, -6)
+    gui.highlightButton(button)
+    button:SetScript("OnMouseUp", function()
+      local handler = progress_bar:GetScript("OnMouseUp")
+      if handler then handler(progress_bar) end
+    end)
+    button:SetScript("OnEnter", function()
+      local handler = progress_bar:GetScript("OnEnter")
+      if handler then handler(progress_bar) end
+    end)
+    button:SetScript("OnLeave", function()
+      local handler = progress_bar:GetScript("OnLeave")
+      if handler then handler(progress_bar) end
+    end)
     local target_value = text_frame:CreateFontString(nil, "ARTWORK",
       "GameFontHighlightSmall")
     M.target_value = target_value
     text_frame.target_value = target_value
-    target_value:SetPoint("TOPRIGHT", stop_button, "BOTTOMRIGHT", -2, -6)
+    target_value:SetAllPoints(button)
     target_value:SetJustifyH("RIGHT")
     target_value.updateDisplay = function(self, value, goal)
       if goal and goal > 0 then
