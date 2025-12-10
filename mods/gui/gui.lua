@@ -294,6 +294,7 @@ local function enableHighlight(button)
   texture:SetAlpha(.2)
   button:SetHighlightTexture(texture)
 end
+M.highlightButton = enableHighlight
 
 do
   local function name(frame, id)

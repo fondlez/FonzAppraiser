@@ -80,6 +80,7 @@ do
     name_button:SetWidth(250)
     name_button:SetHeight(12)
     name_button:SetPoint("TOPLEFT", text_frame, 4, -8)
+    gui.highlightButton(name_button)
     
     local name_text = name_button:CreateFontString()
     name_text:SetFontObject(GameFontHighlightSmall)
