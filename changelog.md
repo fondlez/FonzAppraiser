@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2025-12-10
+
+### Changed
+
+- [Summary Tab] clickable text now highlights on mouseover
+- [Summary Tab] Target Value currency text can also be clicked like the progress 
+bar to change the target value
+
+### Fixed
+
+- [Summary Tab] Fix for Start/Stop buttons and Target text anchors. Github 
+Issue #11
+- [Sessions Tab] Disables the unnecessary Per Hour value text in this tab
+- [Sessions Tab] Fix mouseover highlight of listed sessions and Most Valuable
+Item text on the 3.3.5 client
+- Corrected the default TBC item notify sound location
+- Improved client and content expansion detection
+
 ## [3.2.0] - 2025-03-19
 
 ### Changed

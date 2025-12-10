@@ -1,6 +1,18 @@
 local A = FonzAppraiser
 
-A.HELP_VERSION = [[Version 3.2.0 - 2025-03-19 |cffffffff
+A.HELP_VERSION = [[Version 3.3.0 - 2025-12-10 |cffffffff
+[*] [Summary Tab] clickable text now highlights on mouseover.
+[*] [Summary Tab] Target Value currency text can also be clicked like the 
+progress bar to change the target value.
+[*] [Summary Tab] Fix for Start/Stop buttons and Target text anchors. Github 
+Issue #11.
+[*] [Sessions Tab] Fix mouseover highlight of listed sessions and Most Valuable
+Item text on the 3.3.5 client.
+[*] Corrected the default TBC item notify sound location.
+[*] Improved client and content expansion detection.
+[-] [Sessions Tab] Disables the unnecessary Per Hour value text in this tab.
+
+|rVersion 3.2.0 - 2025-03-19 |cffffffff
 [*] Added a minimum quality threshold for market value pricing. Set to: Common 
 or higher. Items of Poor quality will be forced to vendor value. Github Issue 
 #7.
