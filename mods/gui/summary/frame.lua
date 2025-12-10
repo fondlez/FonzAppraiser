@@ -241,14 +241,14 @@ do
     local start_button = gui.button(text_frame, nil, 100, 24, "Start Session")
     M.start_button = start_button
     text_frame.start_button = start_button
-    start_button:SetPoint("TOPLEFT", hot_text, 0, -14)
+    start_button:SetPoint("TOPLEFT", hot_text, "BOTTOMLEFT", -2, -3)
     start_button:SetScript("OnClick", startButton_ConfirmOnClick)
     start_button.update = updateStartButton
     
     local stop_button = gui.button(text_frame, nil, 100, 24, "Stop Session")
     M.stop_button = stop_button
     text_frame.stop_button = stop_button
-    stop_button:SetPoint("TOPRIGHT", hot_value, 0, -14)
+    stop_button:SetPoint("TOPRIGHT", hot_value, "BOTTOMRIGHT", 2, -3)
     stop_button:SetScript("OnClick", stopButton_OnClick)
     stop_button.update = updateStopButton
   end
@@ -258,14 +258,14 @@ do
       "GameFontNormalSmall")
     M.target_label = target_label
     text_frame.target_label = target_label
-    target_label:SetPoint("BOTTOMLEFT", text_frame, "BOTTOMLEFT", 4, 0)
+    target_label:SetPoint("TOPLEFT", start_button, "BOTTOMLEFT", 2, -6)
     target_label:SetText(L["Target:"])
     
     local target_value = text_frame:CreateFontString(nil, "ARTWORK",
       "GameFontHighlightSmall")
     M.target_value = target_value
     text_frame.target_value = target_value
-    target_value:SetPoint("BOTTOMRIGHT", text_frame, "BOTTOMRIGHT", -3, 0)
+    target_value:SetPoint("TOPRIGHT", stop_button, "BOTTOMRIGHT", -2, -6)
     target_value:SetJustifyH("RIGHT")
     target_value.updateDisplay = function(self, value, goal)
       if goal and goal > 0 then
